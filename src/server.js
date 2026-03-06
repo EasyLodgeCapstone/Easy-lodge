@@ -101,13 +101,15 @@ app.use(cookieParser());
 // Routes
 app.use("/api/v1", rateLimiter, Router);
 
-// 404 handler
-app.use(routeNotFound);
+
 
 // Debug route for Sentry (fix #2 - added comma)
 app.get("/debug-sentry", (req, res) => {
   throw new Error("My first Sentry error!");
 });
+
+// 404 handler
+app.use(routeNotFound);
 
 Sentry.setupExpressErrorHandler(app);
 
