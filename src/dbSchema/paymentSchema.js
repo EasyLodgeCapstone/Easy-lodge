@@ -13,7 +13,7 @@ const {
 } = require("drizzle-orm/pg-core");
 
 const paystackPayments = pgTable(
-  "paystack_payments",
+  "payments",
   {
     // ========== CORE IDENTIFIERS ==========
     id: serial("id").primaryKey(),
@@ -138,7 +138,7 @@ const paystackPayments = pgTable(
 
 // ========== PAYMENT LOGS TABLE (Optional) ==========
 const paystackLogs = pgTable(
-  "paystack_logs",
+  "payment_logs",
   {
     id: serial("id").primaryKey(),
     paymentId: integer("payment_id").references(() => paystackPayments.id, { onDelete: "cascade" }),
