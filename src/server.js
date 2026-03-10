@@ -99,7 +99,7 @@ const rateLimiter = async (req, res, next) => {
 app.use(cookieParser());
 
 // Routes
-app.use("/api/v1", rateLimiter, Router);
+app.use("/api/v1",  Router);
 
 
 
