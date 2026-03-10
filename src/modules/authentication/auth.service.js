@@ -1,9 +1,8 @@
-const User = require("./onBoarding.model");
+const User = require("./userSchema.js");
 const bcrypt = require("bcrypt");
-const { ApiError } = require("../../helpers/apiError");
 const { TokenService } = require("../../utils/tokens");
 const { AuthTokens } = require("../../utils/hash");
-const { sendOTPEmail } = require("../mail/email");
+const { sendOTPEmail } = require("../email/email.js");
 
 
 const newToken = TokenService

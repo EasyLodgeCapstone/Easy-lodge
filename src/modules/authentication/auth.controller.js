@@ -1,9 +1,7 @@
 
-const { ApiError } = require("../../helpers/apiError");
-const { apiResponse } = require("../../helpers/apiResponse");
-const User = require("./onBoarding.model");
+const User = require("./userSchema.js");
 const bcrypt = require("bcrypt");
-const userServiceActivities = require("./onBoarding.activities");
+const userServiceActivities = require("./auth.service.js");
 
 
 const userService = new userServiceActivities();
