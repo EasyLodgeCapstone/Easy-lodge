@@ -1,11 +1,12 @@
 const User = require("./userSchema.js");
 const bcrypt = require("bcrypt");
-const { TokenService } = require("../../utils/tokens");
+const { userSchema } = require("../../dbSchema/userSchema.js");
+
+const { generateAccessToken, generateRefreshToken } = require("../../utils/tokens");
 const { AuthTokens } = require("../../utils/hash");
 const { sendOTPEmail } = require("../email/email.js");
 
-
-const newToken = TokenService
+const newToken = { generateAccessToken, generateRefreshToken };
 const hash = AuthTokens
 
 
@@ -29,7 +30,10 @@ class userServiceActivities {
         const existingUser = await User.findOne({ email });
 
         if (existingUser) {
-            throw new ApiError(409, "Identity conflict: Email already taken");
+            return res.status(409).json({
+                "success": false,
+                "message": "Identity conflict: Email already taken"
+            });
         }
 
         // Hash password
@@ -56,16 +60,25 @@ class userServiceActivities {
     async login(email, password) {
         const user = await User.findOne({ email });
         if (!user) {
-            throw new ApiError(404, "User does not exist");
+            return res.status(404).json({ 
+            "success": false,
+            "message": "User does not exist"
+         });
         }
 
         const isPasswordValid = await hash.comparePassword(password, user.password);
         if (!isPasswordValid) {
-            throw new ApiError(401, "Invalid user credentials");
+            return res.status(401).json({ 
+            "success": false, 
+            "message": "Invalid user credentials" 
+        });
         }
 
         if (!user.isVerified) {
-            throw new ApiError(403, "Account not verified. Please verify your account to log in.");
+            return res.status(403).json({ 
+            "success": false, 
+            "message": "Account not verified. Please verify your account to log in." 
+        });
         }
 
         // Generate token
@@ -82,12 +95,12 @@ class userServiceActivities {
     async verifyAccount(email, otp) {
         const user = await User.findOne({ email });
 
-        if (!user) throw new ApiError(404, "User not found");
-        if (user.isVerified) throw new ApiError(400, "Account already verified");
+        if (!user) return res.status(404).json({ "success": false, "message": "User not found" });
+        if (user.isVerified) return res.status(400).json({ "success": false, "message": "Account already verified" });
 
         // Check if OTP matches and hasn't expired
-        if (user.otp !== otp) throw new ApiError(400, "Invalid OTP");
-        if (new Date() > user.otpExpiry) throw new ApiError(400, "OTP has expired");
+        if (user.otp !== otp) return res.status(400).json({ "success": false, "message": "Invalid OTP" });
+        if (new Date() > user.otpExpiry) return res.status(400).json({ "success": false, "message": "OTP has expired" });
 
         user.isVerified = true;
         user.otp = null; // Clear OTP once used
@@ -99,7 +112,7 @@ class userServiceActivities {
 
     async resendOtp(email) {
         const user = await User.findOne({ email });
-        if (!user) throw new ApiError(404, "User not found");
+        if (!user) return res.status(404).json({ "success": false, "message": "User not found" });
 
         // Generate otp, otp expiry and send otp as email
         const result = await this.generateOtp(user.email, user.name, 'RESEND_OTP');
@@ -124,7 +137,7 @@ class userServiceActivities {
 
     async forgotPassword(email) {
         const user = await User.findOne({ email });
-        if (!user) throw new ApiError(404, "User not found");
+        if (!user) return res.status(404).json({ "success": false, "message": "User not found" });
 
         // Generate otp, otp expiry and send otp as email
         const result = await this.generateOtp(user.email, user.name, 'PASSWORD_RESET');
@@ -138,7 +151,7 @@ class userServiceActivities {
 
     async resetPassword(email, otp, newPassword) {
         const user = await User.findOne({ email });
-        if (!user) throw new ApiError(400, "Invalid or expired OTP");
+        if (!user) return res.status(400).json({ "success": false, "message": "Invalid or expired OTP" });
 
         user.password = await AuthTokens.hashPassword(newPassword);
         user.otp = null;
@@ -155,7 +168,7 @@ class userServiceActivities {
         if (updateData.name) updates.name = updateData.name;
         if (updateData.email) {
             const existing = await User.findOne({ email: updateData.email, _id: { $ne: userId } });
-            if (existing) throw new ApiError(400, "Email already in use by another account");
+            if (existing) return res.status(400).json({ "success": false, "message": "Email already in use by another account" });
             updates.email = updateData.email;
         }
         if (updateData.password) {
@@ -167,7 +180,7 @@ class userServiceActivities {
             { new: true, runValidators: true }
         ).select("-password -otp -otpExpiry");
 
-        if (!user) throw new ApiError(404, "User not found");
+        if (!user) return res.status(404).json({ "success": false, "message": "User not found" });
         return user;
     }
 
@@ -183,7 +196,7 @@ class userServiceActivities {
             { new: true }
         );
 
-        if (!user) throw new ApiError(404, "User not found");
+        if (!user) return res.status(404).json({ "success": false, "message": "User not found" });
         return { message: "Account deactivated successfully" };
     }
 
@@ -208,4 +221,4 @@ class userServiceActivities {
 }
 
 
-module.exports = userServiceActivities;
+module.exports = new userServiceActivities();
