@@ -1,8 +1,7 @@
 const { integer, pgTable, varchar, timestamp } = require("drizzle-orm/pg-core");
 const { usersTable } = require("./userSchema");
-const { request } = require("express");
 
-const serviceRequestsTable = pgTable("service_requests", {
+const serviceRequestTable = pgTable("service_requests", {
     id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
     userId: integer("user_id").references(() => usersTable.id).notNull(),
     roomId: integer("room_id").notNull(),
@@ -13,4 +12,4 @@ const serviceRequestsTable = pgTable("service_requests", {
     updatedAt: timestamp("updated_at").defaultNow()
 });
 
-module.exports = { serviceRequestsTable };
+module.exports = { serviceRequestTable };

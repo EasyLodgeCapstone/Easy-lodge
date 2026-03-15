@@ -33,7 +33,11 @@ const usersTable = pgTable("users", {
 
     createdAt: timestamp("created_at").defaultNow(),
 
-    updatedAt: timestamp("updated_at").defaultNow()
+    updatedAt: timestamp("updated_at").defaultNow(),
+
+    loginAttempts: integer("login_attempts").default(0),
+
+    lockUntil: timestamp("lock_until")
 });
 
-module.exports = { usersTable };
+module.exports = { usersTable, userRoleEnum };

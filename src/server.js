@@ -12,8 +12,17 @@ const cookieParser = require("cookie-parser");
 const routeNotFound = require("./middleware/routeNotfound.js");
 const { checkConnection: ConnectDb } = require("./config/db.js");
 const ngrok = require("@ngrok/ngrok");
+
+// for google auth
+const passport = require("passport");
+require("./config/passportConfig.js"); // Passport config
+
+
 // IMPORT YOUR ROUTER (fix #1)
-const Router = require("./modules/GeneralRoute/Router.js"); // Adjust path as needed
+//const Router = require("./modules/GeneralRoute/Router.js"); // Adjust path as needed
+const authRoutes = require("../src/modules/GeneralRoute/auth.route.js");
+//const usersRoutes = require("../src/modules/GeneralRoute/users.route.js");
+//const requestRoutes = require("../src/modules/GeneralRoute/request.route.js");
 
 const app = express();
 
@@ -98,9 +107,13 @@ const rateLimiter = async (req, res, next) => {
 // Cookie parser middleware
 app.use(cookieParser());
 
+// Initialize Passport
+app.use(passport.initialize());
 // Routes
-app.use("/api/v1", rateLimiter, Router);
-
+//app.use("/api/v1", rateLimiter, Router);
+app.use("/api/auth", rateLimiter, authRoutes);
+//app.use("/api/users", rateLimiter, usersRoutes);
+//app.use("/api/requests", rateLimiter, requestRoutes);
 
 
 // Debug route for Sentry (fix #2 - added comma)
