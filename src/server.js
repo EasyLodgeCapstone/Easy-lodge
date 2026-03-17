@@ -12,6 +12,7 @@ const cookieParser = require("cookie-parser");
 const routeNotFound = require("./middleware/routeNotfound.js");
 const { checkConnection: ConnectDb } = require("./config/db.js");
 const ngrok = require("@ngrok/ngrok");
+const path = require("path");
 // IMPORT YOUR ROUTER (fix #1)
 const Router = require("./modules/GeneralRoute/Router.js"); // Adjust path as needed
 
@@ -27,31 +28,34 @@ app.use(
   }),
 );
 
+// Serve static files
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
 // Body parsing middlewares
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Security and performance enhancements middlewares
-app.use(
-  helmet({
-    contentSecurityPolicy: {
-      useDefaults: false,
-      directives: {
-        defaultSrc: ["'self'"],
-        scriptSrc: [
-          "'self'",
-          "example.com",
-          "cdnjs.cloudflare.com", // For jQuery
-          "fonts.googleapis.com", // For Google Fonts
-          "cdn.jsdelivr.net", // For Bootstrap
-          "cloud.redislabs.com", // For Redis client
-        ],
-        objectSrc: ["'none'"],
-        upgradeInsecureRequests: [],
-      },
-    },
-  }),
-);
+// app.use(
+//   helmet({
+//     contentSecurityPolicy: {
+//       useDefaults: false,
+//       directives: {
+//         defaultSrc: ["'self'"],
+//         scriptSrc: [
+//           "'self'",
+//           "example.com",
+//           "cdnjs.cloudflare.com", // For jQuery
+//           "fonts.googleapis.com", // For Google Fonts
+//           "cdn.jsdelivr.net", // For Bootstrap
+//           "cloud.redislabs.com", // For Redis client
+//         ],
+//         objectSrc: ["'none'"],
+//         upgradeInsecureRequests: [],
+//       },
+//     },
+//   }),
+// );
 
 app.use(compression());
 
@@ -99,9 +103,7 @@ const rateLimiter = async (req, res, next) => {
 app.use(cookieParser());
 
 // Routes
-app.use("/api/v1",  Router);
-
-
+app.use("/api/v1", Router);
 
 // Debug route for Sentry (fix #2 - added comma)
 app.get("/debug-sentry", (req, res) => {
