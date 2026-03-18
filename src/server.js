@@ -19,6 +19,7 @@ const passport = require("passport");
 require("./config/passportConfig.js"); // Passport config
 
 
+const path = require("path");
 // IMPORT YOUR ROUTER (fix #1)
 //const Router = require("./modules/GeneralRoute/Router.js"); // Adjust path as needed
 const authRoutes = require("../src/modules/GeneralRoute/auth.route.js");
@@ -37,31 +38,34 @@ app.use(
   }),
 );
 
+// Serve static files
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
 // Body parsing middlewares
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Security and performance enhancements middlewares
-app.use(
-  helmet({
-    contentSecurityPolicy: {
-      useDefaults: false,
-      directives: {
-        defaultSrc: ["'self'"],
-        scriptSrc: [
-          "'self'",
-          "example.com",
-          "cdnjs.cloudflare.com", // For jQuery
-          "fonts.googleapis.com", // For Google Fonts
-          "cdn.jsdelivr.net", // For Bootstrap
-          "cloud.redislabs.com", // For Redis client
-        ],
-        objectSrc: ["'none'"],
-        upgradeInsecureRequests: [],
-      },
-    },
-  }),
-);
+// app.use(
+//   helmet({
+//     contentSecurityPolicy: {
+//       useDefaults: false,
+//       directives: {
+//         defaultSrc: ["'self'"],
+//         scriptSrc: [
+//           "'self'",
+//           "example.com",
+//           "cdnjs.cloudflare.com", // For jQuery
+//           "fonts.googleapis.com", // For Google Fonts
+//           "cdn.jsdelivr.net", // For Bootstrap
+//           "cloud.redislabs.com", // For Redis client
+//         ],
+//         objectSrc: ["'none'"],
+//         upgradeInsecureRequests: [],
+//       },
+//     },
+//   }),
+// );
 
 app.use(compression());
 
@@ -118,6 +122,7 @@ app.use("/api/auth", authRoutes);
 
 //error handling middleware
 app.use(errorHandler);
+app.use("/api/v1", Router);
 
 // Debug route for Sentry (fix #2 - added comma)
 app.get("/debug-sentry", (req, res) => {
