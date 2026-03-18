@@ -5,22 +5,15 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1773154604941,
-      "tag": "0000_early_zarda",
+      "when": 1773533530435,
+      "tag": "0000_naive_freak",
       "breakpoints": true
     },
     {
       "idx": 1,
       "version": "7",
-      "when": 1773154755455,
-      "tag": "0001_bitter_snowbird",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1773649450034,
-      "tag": "0002_tearful_goblin_queen",
+      "when": 1773863411215,
+      "tag": "0001_big_stone_men",
       "breakpoints": true
     }
   ]

@@ -3,6 +3,13 @@ const pkg = require("pg");
 const { drizzle } = require("drizzle-orm/node-postgres");
 const { Pool } = pkg;
 
+//importing other db files 
+const schema = {
+  ...require("../dbSchema/userSchema.js"),
+  ...require("../dbSchema/profileSchema.js"),
+  ...require("../dbSchema/serviceReqsSchema.js"),
+};
+
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
@@ -19,6 +26,7 @@ const checkConnection = async () => {
   }
 };
 
-const db = drizzle(pool);
+//adding schema so db queries are available.
+const db = drizzle(pool, { schema });
 
 module.exports = { db, checkConnection };

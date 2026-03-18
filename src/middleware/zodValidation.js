@@ -1,4 +1,5 @@
-const { z, ZodError } = require("zod");
+const { z, ZodError, json } = require("zod");
+const AppError = require("../middleware/appError.js");
 
 function validateData(schema, targets) {
   return async (req, res, next) => {
@@ -13,14 +14,18 @@ function validateData(schema, targets) {
     } catch (error) {
       if (error instanceof ZodError) {
         // Pass all validation errors to the error handler
-        console.log("Validation errors:", error);
+        // console.log("Validation errors:", error);
         return next(
-          new res(400, "Validation failed", true, {
-            errors: error.issues.map((err) => ({
-              field: err.path.join("."),
-              message: err.message,
-            })),
-          }),
+          new AppError(
+            JSON.stringify({
+              message: "Validation failed",
+              errors: error.issues.map((err) => ({
+                field: err.path.join("."),
+                message: err.message,
+              })),
+            }),
+            400
+          )
         );
       }
 
