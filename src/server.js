@@ -12,6 +12,7 @@ const cookieParser = require("cookie-parser");
 const routeNotFound = require("./middleware/routeNotfound.js");
 const { checkConnection: ConnectDb } = require("./config/db.js");
 const ngrok = require("@ngrok/ngrok");
+const errorHandler = require("./middleware/errorHandler.js"); // Import error handling middleware
 
 // for google auth
 const passport = require("passport");
@@ -111,10 +112,12 @@ app.use(cookieParser());
 app.use(passport.initialize());
 // Routes
 //app.use("/api/v1", rateLimiter, Router);
-app.use("/api/auth", rateLimiter, authRoutes);
+app.use("/api/auth", authRoutes);
 //app.use("/api/users", rateLimiter, usersRoutes);
 //app.use("/api/requests", rateLimiter, requestRoutes);
 
+//error handling middleware
+app.use(errorHandler);
 
 // Debug route for Sentry (fix #2 - added comma)
 app.get("/debug-sentry", (req, res) => {
@@ -152,11 +155,11 @@ const startServer = async () => {
     });
 
     // Get your endpoint online
-    ngrok
-      .connect({ addr: process.env.PORT, authtoken_from_env: true })
-      .then((listener) =>
-        console.log(`Ingress established at: ${listener.url()}`),
-      );
+    //ngrok
+    //  .connect({ addr: process.env.PORT, authtoken_from_env: true })
+    //  .then((listener) =>
+    //    console.log(`Ingress established at: ${listener.url()}`),
+    //  );
   } catch (error) {
     console.error("❌ Failed to connect to the database:", error);
     process.exit(1);

@@ -1,4 +1,4 @@
-const db = require("../../config/db.js");
+const { db } = require("../../config/db.js");
 const { usersTable } = require("../../dbSchema/userSchema.js");
 const { eq } = require("drizzle-orm");
 
@@ -6,7 +6,10 @@ const redisClient = require("../../utils/redis-client.js");
 const { hashPassword, comparePassword, generateOtp } = require("../../utils/otpAndPassword.utils.js");
 const { generateAccessToken, generateRefreshToken, } = require("../../utils/CreateJwtToken.js");
 const { sendOTPEmail } = require("../email/email.js");
+const AppError = require("../../middleware/appError.js");
 
+const Max_LOGIN_ATTEMPTS = 5;
+const LOCK_TIME = 2 * 60 * 1000; // 2 minutes
 
 
 class userServiceActivities {
@@ -19,10 +22,7 @@ class userServiceActivities {
         });
 
         if (existingUser) {
-            return res.status(409).json({
-                "success": false,
-                "message": "Identity conflict: Email already exists"
-            });
+            throw new AppError("Identity conflict: Email already exists", 400);
         }
 
         // Hash password
@@ -44,55 +44,65 @@ class userServiceActivities {
         await sendOTPEmail(email, name, "VERIFICATION", otp);
 
         // Return user without sensitive fields
-        return user[0];
+        const { password: _pw, otp: _otp, otpExpiry: _exp, ...safeUser } = user[0];
+        return safeUser;
     }
 
     async login(email, password) {
-        const user = await db.query(usersTable).findFirst({
+        const user = await db.query.usersTable.findFirst({
             where: (user, { eq }) => eq(user.email, email)
         });
         if (!user) {
-            return res.status(404).json({
-                "success": false,
-                "message": "User does not exist"
-            });
+            throw new AppError("user does not exist", 401);
         }
+
+        if (!user.password) {
+            throw new AppError("this account was created via google, please sign in with google", 401);
+        }
+
+
         if (user.lockUntil && user.lockUntil > new Date()) {
-            throw new Error("Account temporarily locked. Try again later.");
+            const secondsLeft = Math.ceil((user.lockUntil - new Date()) / 1000);
+            const minutesLeft = Math.ceil(secondsLeft / 60);
+            throw new AppError(
+                `Account temporarily locked. Try again in ${minutesLeft} minutes${minutesLeft > 1 ? "s" : ""} .`,
+                 403,
+                  { lockUntil: user.lockUntil, secondsRemaining: secondsLeft });
         }
 
         const isPasswordValid = await comparePassword(password, user.password);
         if (!isPasswordValid) {
 
             const attempts = user.loginAttempts + 1;
-            if (attempts >= 5) {
+            const remainingAttempts = Max_LOGIN_ATTEMPTS - attempts;
+
+            if (attempts >= Max_LOGIN_ATTEMPTS) {
+                const lockUntil = new Date(Date.now() + LOCK_TIME);
                 await db.update(usersTable)
                     .set({
                         loginAttempts: attempts,
-                        lockUntil: new Date(Date.now() + 10 * 60 * 1000)
-                    }) // Lock account for 10 minutes
+                        lockUntil
+                    }) // Lock account for the specified time
                     .where(eq(usersTable.email, email));
-                return res.status(403).json({
-                    "success": false,
-                    "message": "Account locked due to multiple failed login attempts. Try again in 10 minutes."
-                });
+                throw new AppError(
+                    "Account temporarily locked due to multiple failed login attempts. Try again later (after 2m mins).",
+                     403, 
+                     {loginAttempts: attempts, lockUntil });
             } else {
                 await db.update(usersTable)
                     .set({ loginAttempts: attempts })
                     .where(eq(usersTable.email, email));
-                return res.status(401).json({
-                    "success": false,
-                    "message": "Invalid user credentials"
-                });
+                throw new AppError(
+                    "Invalid user credentials, multiple tries will trigger account lockout.",
+                     404,
+                      { loginAttempts: attempts, remainingAttempts }
+                    );
             }
         }
 
 
         if (!user.isVerified) {
-            return res.status(403).json({
-                "success": false,
-                "message": "Account not verified. Please verify your account to log in."
-            });
+            throw new AppError("Account not verified. Please verify your account to log in.", 403);
         }
 
         // Generate token
@@ -107,27 +117,29 @@ class userServiceActivities {
                 lockUntil: null
             })
             .where(eq(usersTable.id, user.id));
+
+        // remove sensitive data before returning
+        const { password: _pw, otp: _otp, otpExpiry: _exp, ...safeUser } = user;
+        
         return {
-            user,
+            user: safeUser,
             accessToken,
             refreshToken
         };
-        // Remove sensitive data before returning
-        //const loggedInUser = await User.findById(user._id).select("-password -otp -otpExpiry");
-        //return { user: loggedInUser, token };
     }
 
     async verifyAccount(email, otp) {
-        const user = await db.query(usersTable).findFirst({
+        const user = await db.query.usersTable.findFirst({
             where: (user, { eq }) => eq(user.email, email)
         });
 
-        if (!user) return res.status(404).json({ "success": false, "message": "User not found" });
-        if (user.isVerified) return res.status(400).json({ "success": false, "message": "Account already verified" });
+        if (!user) throw new AppError("User not found", 404);
+        if (user.isVerified) throw new AppError("Account already verified", 400);
 
         // Check if OTP matches and hasn't expired
-        if (user.otp !== otp) return res.status(400).json({ "success": false, "message": "Invalid OTP" });
-        if (!user.otp) return res.status(404).json({ "success": false, "message": "otp expired" });
+        if (!user.otp || !user.otpExpiry) throw new AppError("Otp expired or not found, please request a new one", 400);
+        if (user.otpExpiry < new Date()) throw new AppError("OTP expired, request a new one", 404);
+        if (user.otp !== otp) throw new AppError("Invalid OTP", 400);
 
 
         await db.update(usersTable)
@@ -138,11 +150,11 @@ class userServiceActivities {
     }
 
     async resendOtp(email) {
-        const user = await db.query(usersTable).findFirst({
+        const user = await db.query.usersTable.findFirst({
             where: (user, { eq }) => eq(user.email, email)
         });
 
-        if (!user) return res.status(404).json({ "success": false, "message": "User not found" });
+        if (!user) throw new AppError("User not found", 404);
 
         // Generate otp, otp expiry and send otp as email
         const otp = generateOtp();
@@ -153,14 +165,14 @@ class userServiceActivities {
 
         await sendOTPEmail(email, user.name, "VERIFICATION", otp);
 
-        return true;
+        return otp;
     }
 
-    async generateRefreshToken(userId, token) {
+    async refreshAccessToken(userId, token) {
 
-        const storedToken = await redisClient.get(`refresh:${userId}`);
+        const storedToken = await redisClient.get(`refreshToken:${userId}`);
         if (!storedToken || storedToken !== token) {
-            return res.status(400).json({ "success": false, "message": "Invalid refresh session" }); // No valid refresh token found
+            throw new AppError("Invalid or expired refresh session, please log in again", 401); // No valid refresh token found
         }
         const accessToken = generateAccessToken({ id: userId });
         return accessToken;
@@ -171,14 +183,14 @@ class userServiceActivities {
         const user = await db.query.usersTable.findFirst({
             where: (user, { eq }) => eq(user.email, email)
         });
-        if (!user) return res.status(404).json({ "success": false, "message": "User not found" });
+        if (!user) throw new AppError("User not found", 404);
 
         // Generate otp, otp expiry and send otp as email
         const otp = generateOtp();
         const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
 
         await db.update(usersTable)
-            .set({ otp: otp, otpExpiry: otpExpiry })
+            .set({ otp, otpExpiry })
             .where(eq(usersTable.email, email));
 
         await sendOTPEmail(email, user.name, "PASSWORD_RESET", otp);
@@ -190,13 +202,13 @@ class userServiceActivities {
             where: (user, { eq }) => eq(user.email, email)
         });
         if (!user) { 
-            return res.status(404).json({ "success": false, "message": "User not found" });
-         }
+            throw new AppError("User not found", 404);
+        }
         if (!user.otp || user.otp !== otp) { 
-            return res.status(404).json({ "success": false, "message": "Invalid OTP" }); 
+            throw new AppError("Invalid OTP", 400);
         }
         if (user.otpExpiry < new Date()) {
-            return res.status(400).json({ "success": false, "message": "OTP expired" });
+            throw new AppError("OTP expired", 400);
         }
 
 
@@ -208,20 +220,20 @@ class userServiceActivities {
              })
             .where(eq(usersTable.email, email));
 
-        return { message: "Password reset successful", success: true };
+        return true;
     }
 
     async logout(userId) {
         // Clear the refresh token in the DB to invalidate the session
         await redisClient.del(`refreshToken:${userId}`);
-        return { message: "Logged out successfully", success: true };
+        return true;
     }
 
 
     // For all OAuth logins, all have same logic    
-    async oAuthLogin(user) {
-        user = await db.query.usersTable.findFirst({
-            where: (user, { eq }) => eq(user.email, profile.email)
+    async oAuthLogin(profile) {
+        let user = await db.query.usersTable.findFirst({
+            where: (u, { eq }) => eq(u.email, profile.email)
         });
 
         if (!user) {
@@ -234,10 +246,10 @@ class userServiceActivities {
         }
         const accessToken = generateAccessToken({ id: user.id, role: user.role });
 
-        return { user, accessToken };
+        // remove sensitive data before returning
+        const { password: _pw, otp: _otp, otpExpiry: _exp, ...safeUser } = user;
+        return { user: safeUser, accessToken };
     }
-
-
 }
 
 

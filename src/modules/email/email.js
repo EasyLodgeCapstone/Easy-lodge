@@ -5,7 +5,7 @@ const { config } = require("../../config/config.js");
 // ENV CONFIG 
 const EMAILUSERNAME = config.EMAIL_USERNAME;
 const EMAILPASSWORD = config.EMAIL_PASSWORD;
-console.log("Email Values: ", EMAILUSERNAME, EMAILPASSWORD)
+console.log("Email Values: ", EMAILUSERNAME, /*EMAILPASSWORD*/)
 
 // Nodemailer transporter setup
 const transporter = nodemailer.createTransport({

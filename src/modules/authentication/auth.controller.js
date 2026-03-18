@@ -2,7 +2,7 @@ const userServiceActivities = require("./auth.service.js");
 
 class AuthController {
 
-    async registerUser(req, res) {
+    async registerUser(req, res, next) {
         try {
             const { name, email, password } = req.body;
 
@@ -13,19 +13,13 @@ class AuthController {
                 message: "User created successfully. Please verify your email.",
                 data: user
             });
-        } catch (err) {
-            if (err) {
-                return res.status(500).json({
-                    success: false,
-                    message: "An error occurred while creating the user",
-                    error: err.message
-                });
-            }
+        } catch (error) {
+            next(error);
         }
     }
 
 
-    async loginUser(req, res) {
+    async loginUser(req, res, next) {
         try {
             const { email, password } = req.body;
 
@@ -34,18 +28,15 @@ class AuthController {
             res.status(200).json({
                 success: true,
                 message: "Login successful. Please verify your email if you haven't already.",
-
+                data: result
             });
 
         } catch (error) {
-            res.status(500).json({
-                success: false, message: "An error occurred during login",
-                error: error.message
-            });
+            next(error);
         }
-    };
+    }
 
-    async verifyAccount(req, res) {
+    async verifyAccount(req, res, next) {
         try {
             const { email, otp } = req.body;
 
@@ -56,19 +47,15 @@ class AuthController {
                 message: "Account verified successfully. You can now log in."
             });
         } catch (error) {
-            res.status(500).json({
-                success: false,
-                message: "An error occurred during account verification",
-                error: error.message
-            });
+            next(error);
         }
-    };
+    }
 
-    async resendOtp(req, res) {
+    async resendOtp(req, res, next) {
         try {
             const { email } = req.body;
 
-            const result = await userServiceActivities.resendOtp(email);
+            const result = await userServiceActivities.resendOtp(email); // remove the const result later and remove otp from response.
 
             res.status(200).json({
                 success: true,
@@ -77,51 +64,37 @@ class AuthController {
             });
 
         } catch (error) {
-            res.status(500).json({
-                success: false,
-                message: "An error occurred while resending OTP",
-                error: error.message
-            });
+            next(error);
         }
-    };
+    }
 
-    async refreshToken(req, res) {
+    async refreshToken(req, res, next) {
         try {
-            const { id } = req.user; // From decoded refresh token
-            const token = await userServiceActivities.generateRefreshToken(id)
+            const token = await userServiceActivities.refreshAccessToken(req.user.id, req.refreshToken);
             res.status(200).json({
                 success: true,
                 message: "Token refreshed successfully",
                 data: { token }
             });
         } catch (error) {
-            res.status(500).json({
-                success: false,
-                message: "An error occurred while refreshing token",
-                error: error.message
-            });
+            next(error);
         }
+    }
 
-    };
-
-    async forgotPassword(req, res) {
+    async forgotPassword(req, res, next) {
         try {
-            await userServiceActivities.forgotPassword(req.body.email);
+            const otp = await userServiceActivities.forgotPassword(req.body.email);
             res.status(200).json({
                 success: true,
                 message: "OTP sent to email if it exists",
                 otp // For testing purposes only. Remove in production.
             });
         } catch (error) {
-            res.status(500).json({
-                success: false,
-                message: "An error occurred while sending OTP",
-                error: error.message
-            });
+            next(error);
         }
-    };
+    }
 
-    async resetPassword(req, res) {
+    async resetPassword(req, res, next) {
         try {
             const { email, otp, newPassword } = req.body;
             await userServiceActivities.resetPassword(email, otp, newPassword);
@@ -130,33 +103,11 @@ class AuthController {
                 message: "Password reset successful"
             });
         } catch (error) {
-            res.status(500).json({
-                success: false,
-                message: "An error occurred while resetting password",
-                error: error.message
-            });
+            next(error);
         }
-    };
+    }
 
-
-    async deleteProfile(req, res, next) {
-        try {
-            const result = await userServiceActivities.softDeleteUser(req.user.id);
-            res.status(200).json({
-                success: true,
-                message: "Profile deleted successfully",
-                data: result
-            });
-        } catch (error) {
-            res.status(500).json({
-                success: false,
-                message: "An error occurred while deleting profile",
-                error: error.message
-            });
-        }
-    };
-
-    async logoutUser(req, res) {
+    async logoutUser(req, res, next) {
         try {
             await userServiceActivities.logout(req.user.id);
             res.status(200).json({
@@ -164,13 +115,9 @@ class AuthController {
                 message: "Logout successful"
             });
         } catch (error) {
-            res.status(500).json({
-                success: false,
-                message: "An error occurred while logging out",
-                error: error.message
-            });
+            next(error);
         }
-    };
+    }
 
     async loginWithOauth(req, res, next) {
         try {
@@ -190,13 +137,9 @@ class AuthController {
                 data: result
             });
         } catch (error) {
-            res.status(500).json({
-                success: false,
-                message: "An error occurred while logging in with OAuth",
-                error: error.message
-            });
+            next(error);
         }
-    };
+    }
 }
 
 module.exports = new AuthController();
