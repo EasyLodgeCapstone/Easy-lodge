@@ -25,8 +25,6 @@ class HotelsContr {
           reject(err);
         } else {
           console.log("Upload successful");
-          // console.log("Body:", req.body);
-          // console.log("Files:", req.files);
           resolve();
         }
       });
@@ -46,12 +44,7 @@ class HotelsContr {
     let uploadedFiles = [];
 
     try {
-      // Process upload first - this will populate req.body and req.files
       await this.processUpload(req, res);
-
-      // NOW we can access req.body and req.files
-      // console.log("Request Body after upload:", req.body);
-      // console.log("Request Files after upload:", req.files);
 
       // Quick validation
       if (!req.body.hotelName || !req.body.userId) {
@@ -113,13 +106,6 @@ class HotelsContr {
       return res.status(201).json({
         success: true,
         message: "Hotel added successfully",
-        data: {
-          id: savedHotel.id || savedHotel._id,
-          name: savedHotel.hotelName,
-          imageCount: hotelData.hotelImages.length,
-          thumbnail: hotelData.hotelThumbnail,
-          processingTime: `${processingTime}ms`,
-        },
       });
     } catch (error) {
       console.error("❌ Add hotel error:", error);
