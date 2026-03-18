@@ -12,9 +12,19 @@ const cookieParser = require("cookie-parser");
 const routeNotFound = require("./middleware/routeNotfound.js");
 const { checkConnection: ConnectDb } = require("./config/db.js");
 const ngrok = require("@ngrok/ngrok");
+const errorHandler = require("./middleware/errorHandler.js"); // Import error handling middleware
+
+// for google auth
+const passport = require("passport");
+require("./config/passportConfig.js"); // Passport config
+
+
 const path = require("path");
 // IMPORT YOUR ROUTER (fix #1)
-const Router = require("./modules/GeneralRoute/Router.js"); // Adjust path as needed
+//const Router = require("./modules/GeneralRoute/Router.js"); // Adjust path as needed
+const authRoutes = require("../src/modules/GeneralRoute/auth.route.js");
+//const usersRoutes = require("../src/modules/GeneralRoute/users.route.js");
+//const requestRoutes = require("../src/modules/GeneralRoute/request.route.js");
 
 const app = express();
 
@@ -102,7 +112,16 @@ const rateLimiter = async (req, res, next) => {
 // Cookie parser middleware
 app.use(cookieParser());
 
+// Initialize Passport
+app.use(passport.initialize());
 // Routes
+//app.use("/api/v1", rateLimiter, Router);
+app.use("/api/auth", authRoutes);
+//app.use("/api/users", rateLimiter, usersRoutes);
+//app.use("/api/requests", rateLimiter, requestRoutes);
+
+//error handling middleware
+app.use(errorHandler);
 app.use("/api/v1", Router);
 
 // Debug route for Sentry (fix #2 - added comma)
@@ -141,11 +160,11 @@ const startServer = async () => {
     });
 
     // Get your endpoint online
-    ngrok
-      .connect({ addr: process.env.PORT, authtoken_from_env: true })
-      .then((listener) =>
-        console.log(`Ingress established at: ${listener.url()}`),
-      );
+    //ngrok
+    //  .connect({ addr: process.env.PORT, authtoken_from_env: true })
+    //  .then((listener) =>
+    //    console.log(`Ingress established at: ${listener.url()}`),
+    //  );
   } catch (error) {
     console.error("❌ Failed to connect to the database:", error);
     process.exit(1);
