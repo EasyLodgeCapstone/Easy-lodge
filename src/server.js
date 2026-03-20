@@ -112,7 +112,7 @@ app.use(cookieParser());
 app.use(passport.initialize());
 // Routes
 //app.use("/api/v1", rateLimiter, Router);
-app.use("/api/auth", authRoutes);
+app.use("/api/auth", rateLimiter, authRoutes);
 //app.use("/api/users", rateLimiter, usersRoutes);
 //app.use("/api/requests", rateLimiter, requestRoutes);
 

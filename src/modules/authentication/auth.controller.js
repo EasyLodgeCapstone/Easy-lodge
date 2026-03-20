@@ -60,7 +60,7 @@ class AuthController {
             res.status(200).json({
                 success: true,
                 message: "OTP resent successfully. Please check your email.",
-                otp: result // For testing purposes only. Remove in production.
+                //otp: result // For testing purposes only. Remove in production.
             });
 
         } catch (error) {
@@ -87,7 +87,8 @@ class AuthController {
             res.status(200).json({
                 success: true,
                 message: "OTP sent to email if it exists",
-                otp // For testing purposes only. Remove in production.
+                //otp 
+                // For testing purposes only. Remove in production.
             });
         } catch (error) {
             next(error);

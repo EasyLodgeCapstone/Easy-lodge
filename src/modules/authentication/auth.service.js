@@ -165,7 +165,7 @@ class userServiceActivities {
 
         await sendOTPEmail(email, user.name, "VERIFICATION", otp);
 
-        return otp;
+        return true; //return otp for testing
     }
 
     async refreshAccessToken(userId, token) {
@@ -194,7 +194,7 @@ class userServiceActivities {
             .where(eq(usersTable.email, email));
 
         await sendOTPEmail(email, user.name, "PASSWORD_RESET", otp);
-        return otp;
+        return true;//or return otp
     }
 
     async resetPassword(email, otp, newPassword) {

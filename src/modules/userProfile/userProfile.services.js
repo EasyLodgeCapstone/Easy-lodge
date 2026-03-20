@@ -1,23 +1,29 @@
-const db = require("../../config/db.js");
-const { usersTable } = require("../../db/schema/users.schema");
-const { eq, ne } = require("drizzle-orm");
-const { hashPassword, comparePassword, generateOtp } = require("../../utils/otpAndPassword.utils.js");
+const { db } = require("../../config/db.js");
+const { usersTable } = require("../../dbschema/users.schema");
+const { profileSchema } = require("../../dbSchema/profileSchema.js")
+const { eq } = require("drizzle-orm");
+const { hashPassword } = require("../../utils/otpAndPassword.utils.js");
+const AppError = require("../../middleware/appError.js")
 
 class UsersService {
 
     async getProfile(userId) {
-
         const user = await db.query.usersTable.findFirst({
             where: (users, { eq }) => eq(users.id, userId)
         });
 
-        return user;
+        if (!user) throw new AppError("User not found", 404);
+
+        // Strip sensitive fields before returning
+        const { password, otp, otpExpiry, ...safeUser } = user;
+        return safeUser;
     }
 
     async updateProfile(userId, updateData) {
+        const userUpdates = {};
+        const profileUpdates = {};
 
-        const updates = {};
-        if (updateData.name) updates.name = updateData.name;
+        if (updateData.name) userUpdates.name = updateData.name;
         if (updateData.email) {
             const existingUser = await db.query.usersTable.findFirst({
                 where: (users, { eq, and, ne }) => and(
@@ -28,46 +34,45 @@ class UsersService {
             if (existingUser) {
                 throw new Error("Email already in use");
             }
-            updates.email = updateData.email;
+            userUpdates.email = updateData.email;
         }
 
         if (updateData.password) {
-            updates.password = await hashPassword(updateData.password)
+            userUpdates.password = await hashPassword(updateData.password)
         };
-        if (updateData.phone) updates.phone = updateData.phone;
-        const updated = await db.update(usersTable)
-            .set(updates)
-            .where(eq(usersTable.id, userId))
-            .returning();
+        if (updateData.phone) profileUpdates.phone = updateData.phone;
 
-        return updated[0];
-    }
+        if (updateData.bio) profileUpdates.bio = updateData.bio;
+        if (updateData.country) profileUpdates.country = updateData.country;
 
-    async softDeleteUser(userId) {
-
-        const result = await db.update(usersTable)
-            .set({
-                isDeleted: true,
-                deletedAt: new Date()
-            })
-            .where(eq(usersTable.id, userId))
-            .returning();
-
-        if (!result.length) {
-            throw new Error("User not found");
+        let updatedUser = null;
+        if (Object.keys(userUpdates).length > 0){
+            const result = await db.update(usersTable)
+                .set(userUpdates)
+                .where(eq(usersTable.id, userId))
+                .returning();
+            updatedUser = result[0];    
+        }
+        // Update profilesTable if there are profile-level changes
+        if (Object.keys(profileUpdates).length > 0) {
+            await db.update(profilesTable)
+                .set(profileUpdates)
+                .where(eq(profilesTable.userId, userId));
         }
 
-        return result[0];
+        return updatedUser;
     }
+
     async deleteAccount(userId) {
 
-        await db.update(usersTable)
+       const result = await db.update(usersTable)
             .set({
                 isDeleted: true,
                 deletedAt: new Date()
             })
-            .where(eq(usersTable.id, userId));
-
+            .where(eq(usersTable.id, userId))
+            .returning();
+        if (!result.length) throw new AppError("User not found", 404);
         return true;
     }
 }
