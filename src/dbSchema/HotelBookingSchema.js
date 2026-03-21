@@ -15,6 +15,7 @@ const { usersTable } = require("../dbSchema/userSchema");
 const { hotels } = require("../dbSchema/HotelsSchema");
 const { hotelRooms } = require("../dbSchema/HotelRoomSchema");
 
+// ========== MAIN BOOKINGS TABLE ==========
 const hotelBookings = pgTable("hotel_bookings", {
   // ========== PRIMARY KEY ==========
   id: serial("id").primaryKey(),
@@ -30,9 +31,8 @@ const hotelBookings = pgTable("hotel_bookings", {
   hotelId: integer("hotel_id")
     .notNull()
     .references(() => hotels.id, { onDelete: "cascade" }),
-    
-  roomId: integer("room_id")
-    .references(() => hotelRooms.id, { onDelete: "set null" }),
+  
+  // REMOVED: roomId field - now using junction table for multiple rooms
   
   // ========== BOOKING DETAILS ==========
   checkInDate: timestamp("check_in_date").notNull(),
@@ -48,7 +48,7 @@ const hotelBookings = pgTable("hotel_bookings", {
   specialRequests: text("special_requests"),
   
   // ========== PRICING ==========
-  pricePerNight: decimal("price_per_night", { precision: 10, scale: 2 }).notNull(),
+  // REMOVED: pricePerNight - now stored per room in junction table
   subtotal: decimal("subtotal", { precision: 10, scale: 2 }).notNull(),
   taxAmount: decimal("tax_amount", { precision: 10, scale: 2 }).default("0.00"),
   discountAmount: decimal("discount_amount", { precision: 10, scale: 2 }).default("0.00"),
@@ -57,18 +57,14 @@ const hotelBookings = pgTable("hotel_bookings", {
   
   // ========== PAYMENT ==========
   paymentStatus: varchar("payment_status", { length: 50 }).default("pending"),
-  // 'pending', 'paid', 'failed', 'refunded'
-  
   paymentMethod: varchar("payment_method", { length: 50 }),
   paymentReference: varchar("payment_reference", { length: 100 }),
   
   // ========== BOOKING STATUS ==========
   bookingStatus: varchar("booking_status", { length: 50 }).default("confirmed"),
-  // 'confirmed', 'pending', 'cancelled', 'completed', 'no_show'
-  
   cancellationReason: text("cancellation_reason"),
   cancelledAt: timestamp("cancelled_at"),
-  cancelledBy: integer("cancelled_by"), // userId or adminId
+  cancelledBy: integer("cancelled_by"),
   
   // ========== METADATA ==========
   metadata: jsonb("metadata").default({}),
@@ -82,7 +78,6 @@ const hotelBookings = pgTable("hotel_bookings", {
   bookingRefIdx: index("idx_hotel_bookings_reference").on(table.bookingReference),
   userIdIdx: index("idx_hotel_bookings_user_id").on(table.userId),
   hotelIdIdx: index("idx_hotel_bookings_hotel_id").on(table.hotelId),
-  roomIdIdx: index("idx_hotel_bookings_room_id").on(table.roomId),
   statusIdx: index("idx_hotel_bookings_status").on(table.bookingStatus),
   paymentStatusIdx: index("idx_hotel_bookings_payment_status").on(table.paymentStatus),
   dateRangeIdx: index("idx_hotel_bookings_dates").on(table.checkInDate, table.checkOutDate),
@@ -90,4 +85,36 @@ const hotelBookings = pgTable("hotel_bookings", {
   createdAtIdx: index("idx_hotel_bookings_created_at").on(table.createdAt),
 }));
 
-module.exports = { hotelBookings };
+// ========== JUNCTION TABLE: BOOKING ROOMS ==========
+const bookingRooms = pgTable("booking_rooms", {
+  id: serial("id").primaryKey(),
+  
+  // Foreign key to bookings table
+  bookingId: integer("booking_id")
+    .notNull()
+    .references(() => hotelBookings.id, { onDelete: "cascade" }),
+  
+  // Foreign key to rooms table
+  roomId: integer("room_id")
+    .notNull()
+    .references(() => hotelRooms.id, { onDelete: "cascade" }),
+  
+  // Room-specific pricing for this booking
+  pricePerNight: decimal("price_per_night", { precision: 10, scale: 2 }).notNull(),
+  
+  // Optional: track which guests are in which room
+  guestNames: text("guest_names"),
+  
+  // Optional: room quantity if booking multiple of same room type
+  quantity: integer("quantity").default(1),
+  
+  // Timestamps
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  
+}, (table) => ({
+  bookingIdIdx: index("idx_booking_rooms_booking_id").on(table.bookingId),
+  roomIdIdx: index("idx_booking_rooms_room_id").on(table.roomId),
+  uniqueBookingRoom: index("idx_unique_booking_room").on(table.bookingId, table.roomId),
+}));
+
+module.exports = { hotelBookings, bookingRooms };

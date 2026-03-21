@@ -1,0 +1,4 @@
+$kind: collection
+name: Hotel Rooms
+description: Hotel room management endpoints for listing and adding rooms.
+order: 3000

@@ -1,0 +1,15 @@
+$kind: http-request
+name: Initialize Payment
+method: POST
+url: '{{baseUrl}}/api/v1/paystack/initialize'
+order: 1000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "email": "customer@example.com",
+      "amount": 50000
+    }

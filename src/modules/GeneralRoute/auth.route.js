@@ -1,5 +1,5 @@
 const router = require("express").Router();
-const passport = require("../../config/passportConfig.js");
+// const passport = require("../../config/passportConfig.js");
 const { Auth, AuthRefresh} = require("../../middleware/Auth.js");
 const AuthController = require("../authentication/auth.controller.js");
 const { validateData } = require("../../middleware/zodValidation.js");
@@ -21,8 +21,8 @@ router.post("/reset-password", validateData(resetPasswordSchema, ["body"]), Auth
 
 //google and oauth route
 
-router.get("/google", passport.authenticate("google", { scope: ["profile", "email"], session: false }));
-router.get("/google/callback", passport.authenticate("google", { session: false, failureRedirect: "/api/auth/login"  }), AuthController.loginWithOauth);//url to be changed to frontend url.
+// router.get("/google", passport.authenticate("google", { scope: ["profile", "email"], session: false }));
+// router.get("/google/callback", passport.authenticate("google", { session: false, failureRedirect: "/api/auth/login"  }), AuthController.loginWithOauth);//url to be changed to frontend url.
 
 router.post("/refresh-token", AuthRefresh, AuthController.refreshToken);
 router.post("/logout", Auth, AuthController.logoutUser);

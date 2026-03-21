@@ -5,19 +5,34 @@ const router = express.Router();
 
 const PaystackService = require("../PayStackPayment/Service/PaystackService");
 const HotelsService = require("../Hotels/Service/HotelsService");
+const AddHotelRoomsService = require("../AddHotelRooms/Service/AddHotelRoomsService");
+const HotelBookingService = require("../HotelBooking/Service/HotelBookingService");
 
 const PayStackController = require("../PayStackPayment/Controller/PayStackContr");
 const HotelsController = require("../Hotels/Controller/HotelsController");
+const AddHotelRoomsContr = require("../AddHotelRooms/Controller/AddHotelRoomContr");
+const BookingRoomContr = require("../HotelBooking/Controller/BookingRoomContr");
+
+// Create instances of the controllers
 
 const payStackController = new PayStackController(new PaystackService());
 const hotelsController = new HotelsController(new HotelsService());
+const addHotelRoomsContr = new AddHotelRoomsContr(new AddHotelRoomsService());
+const bookingRoomContr = new BookingRoomContr(new HotelBookingService());
 
 // payStack payment route
 router.post("/paystack/initialize", payStackController.initializeTransaction);
 router.get("/paystack/verify/:reference", payStackController.verifyTransaction);
 
 // hotels route
-router.post("/hotels/add",hotelsController.AddHotel );
+router.get("/hotels", hotelsController.getHotels);
+router.post("/hotels/add", hotelsController.AddHotel);
+// add hotel rooms route
+router.get("/hotels/rooms", addHotelRoomsContr.getHotelRooms);
+router.post("/hotels/addhotelrooms", addHotelRoomsContr.AddHotelRoom);
 
+// hotel booking route
+// router.get("/hotels/bookings", hotelBookingContr.getHotelBookings);
+router.post("/hotels/bookings", bookingRoomContr.createBooking);
 
 module.exports = router;

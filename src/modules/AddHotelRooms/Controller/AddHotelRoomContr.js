@@ -1,33 +1,36 @@
+const AddHotelRoomsService = require("../Service/AddHotelRoomsService");
 const {
   uploadHotelFiles,
   handleMulterError,
 } = require("../../../config/mutlerConfig");
-const HotelsService = require("../Service/HotelsService");
 const fs = require("fs").promises;
 const path = require("path");
 const { pipeline } = require("stream/promises");
 const { createWriteStream } = require("fs");
 const { Readable } = require("stream");
 const multer = require("multer");
-
-class HotelsContr {
+class AddHotelRoomsContr {
   constructor() {
-    this.hotelsService = new HotelsService();
+    this.service = new AddHotelRoomsService();
   }
 
-  getHotels = async (req, res) => {
+  getHotelRooms = async (req, res) => {
     try {
-      const hotels = await this.hotelsService.getHotels();
+      const hotelRooms = await this.service.getHotelRooms();
       return res.status(200).json({
         success: true,
-        message: "Hotels fetched successfully",
-        hotels,
+        message: "Hotel rooms retrieved successfully",
+        hotelRooms,
       });
     } catch (error) {
-      handleMulterError(error, res);
+      console.log(error);
+      return res.status(500).json({
+        success: false,
+        message: "Internal server error",
+        error: error.message,
+      });
     }
   };
-
   // Process file uploads - SIMPLIFIED VERSION
   processUpload = (req, res) => {
     return new Promise((resolve, reject) => {
@@ -44,7 +47,6 @@ class HotelsContr {
     });
   };
 
-  // Stream file to disk without loading into memory
   streamToDisk = async (file, destination) => {
     const readStream = Readable.from(file.buffer); // If file is in memory
     const writeStream = createWriteStream(destination);
@@ -52,23 +54,19 @@ class HotelsContr {
     return destination;
   };
 
-  AddHotel = async (req, res) => {
+  AddHotelRoom = async (req, res) => {
     const startTime = Date.now();
     let uploadedFiles = [];
-
     try {
       await this.processUpload(req, res);
 
       // Quick validation
-      if (!req.body.hotelName || !req.body.userId) {
+      if (!req.body.userId) {
         throw new Error(
           "Missing required fields: hotelName and userId are required",
         );
       }
-
-      // Parse JSON data
-      const amenities = this.parseJSON(req.body.hotelAmenities, []);
-      const policies = this.parseJSON(req.body.hotelPolicies, []);
+      const amenities = this.parseJSON(req.body.amenities, []);
 
       // CORRECTION: Handle amenities array properly
       let amenitiesArray = amenities;
@@ -79,76 +77,41 @@ class HotelsContr {
           : [req.body["hotelAmenities[]"]];
       }
 
-      // Build hotel data
-      const hotelData = {
-        userId: req.body.userId,
-        hotelName: req.body.hotelName,
-        hotelEmail: req.body.hotelEmail || "",
-        hotelPhone: req.body.hotelPhone || "",
-        hotelWebsite: req.body.hotelWebsite || "",
-        hotelAddress: req.body.hotelAddress || "",
-        hotelCity: req.body.hotelCity || "",
-        hotelState: req.body.hotelState || "",
-        hotelCountry: req.body.hotelCountry || "",
-        hotelZipCode: req.body.hotelZipCode || "",
-        hotelDescription: req.body.hotelDescription || "",
-        hotelRating: parseFloat(req.body.hotelRating) || 0,
-        hotelReviewCount: parseInt(req.body.hotelReviewCount) || 0,
-        hotelPriceRange: req.body.hotelPriceRange || "",
-        hotelMinPrice: parseFloat(req.body.hotelMinPrice) || 0,
-        hotelMaxPrice: parseFloat(req.body.hotelMaxPrice) || 0,
-        hotelAmenities: amenitiesArray, // Use the processed amenities
-        hotelImages: req.files?.hotelImages?.map((f) => f.path) || [],
-        hotelThumbnail: req.files?.hotelThumbnail?.[0]?.path || null,
-        hotelVideo: req.files?.hotelVideo?.[0]?.path || null,
-        hotelTotalRooms: parseInt(req.body.hotelTotalRooms) || 0,
-        hotelAvailableRooms: parseInt(req.body.hotelAvailableRooms) || 0,
-        hotelPolicies: policies,
+      const newRooms = {
+        ownerId: req.body.userId,
+        hotelId: req.body.hotelId,
+        roomNumber: req.body.roomNumber,
+        roomType: req.body.roomType,
+        roomPrice: req.body.roomPrice,
+        capacity: req.body.roomCapacity,
+        bedType: req.body.bedType,
+        bedCount: req.body.bedCount,
+        size: req.body.size,
+        pricePerNight: req.body.pricePerNight,
+        discountedPrice: req.body.discountedPrice,
+        amenities: amenitiesArray,
+        images: req.files?.hotelImages?.map((f) => f.path) || [],
       };
 
-      // console.log("Hotel data to save:", hotelData);
-
-      // Save to database
-      const savedHotel = await this.hotelsService.AddHotel(hotelData);
-
-      console.log(savedHotel);
-
+      const savedHotelRoom = await this.service.AddHotelRoom(newRooms);
+      console.log(savedHotelRoom);
       const processingTime = Date.now() - startTime;
       console.log(`✅ Hotel added in ${processingTime}ms`);
-
       return res.status(201).json({
         success: true,
         message: "Hotel added successfully",
       });
     } catch (error) {
-      console.error("❌ Add hotel error:", error);
-
+      console.log(error);
       // Cleanup on error
       if (req.files) {
         await this.cleanupFiles(req.files).catch((cleanupErr) =>
           console.warn("Cleanup error:", cleanupErr),
         );
       }
-
-      // Handle different error types
-      if (error instanceof multer.MulterError) {
-        // Multer-specific errors
-        return res.status(400).json({
-          success: false,
-          message: this.getMulterErrorMessage(error),
-          code: error.code,
-        });
-      }
-
-      const statusCode = error.message.includes("timeout") ? 408 : 500;
-      return res.status(statusCode).json({
-        success: false,
-        message: error.message || "Failed to add hotel",
-      });
+      return res.status(500).json({ message: "Internal server error" });
     }
   };
-
-  // Helper to parse JSON safely
   parseJSON = (data, defaultValue = []) => {
     if (!data) return defaultValue;
     try {
@@ -207,4 +170,4 @@ class HotelsContr {
   };
 }
 
-module.exports = HotelsContr;
+module.exports = AddHotelRoomsContr;

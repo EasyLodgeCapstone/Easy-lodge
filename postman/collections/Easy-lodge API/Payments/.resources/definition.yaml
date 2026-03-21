@@ -1,0 +1,4 @@
+$kind: collection
+name: Payments
+description: Paystack payment integration endpoints for initializing and verifying transactions.
+order: 4000

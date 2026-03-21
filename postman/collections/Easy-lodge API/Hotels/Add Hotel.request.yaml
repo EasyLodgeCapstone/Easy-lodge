@@ -1,0 +1,68 @@
+$kind: http-request
+name: Add Hotel
+method: POST
+url: '{{baseUrl}}/api/v1/hotels/add'
+order: 2000
+body:
+  type: formdata
+  content:
+    - key: userId
+      type: text
+      value: '1'
+    - key: hotelName
+      type: text
+      value: 'Grand Hotel'
+    - key: hotelEmail
+      type: text
+      value: 'info@grandhotel.com'
+    - key: hotelPhone
+      type: text
+      value: '+1234567890'
+    - key: hotelWebsite
+      type: text
+      value: 'https://grandhotel.com'
+    - key: hotelAddress
+      type: text
+      value: '123 Main Street'
+    - key: hotelCity
+      type: text
+      value: 'Lagos'
+    - key: hotelState
+      type: text
+      value: 'Lagos'
+    - key: hotelCountry
+      type: text
+      value: 'Nigeria'
+    - key: hotelZipCode
+      type: text
+      value: '100001'
+    - key: hotelDescription
+      type: text
+      value: 'A luxurious hotel in the heart of the city'
+    - key: hotelRating
+      type: text
+      value: '4.5'
+    - key: hotelReviewCount
+      type: text
+      value: '100'
+    - key: hotelPriceRange
+      type: text
+      value: 'luxury'
+    - key: hotelMinPrice
+      type: text
+      value: '50000'
+    - key: hotelMaxPrice
+      type: text
+      value: '200000'
+    - key: hotelAmenities
+      type: text
+      value: '["WiFi", "Pool", "Gym", "Restaurant"]'
+    - key: hotelTotalRooms
+      type: text
+      value: '50'
+    - key: hotelAvailableRooms
+      type: text
+      value: '30'
+    - key: hotelPolicies
+      type: text
+      value: '["No smoking", "Check-in after 2pm"]'

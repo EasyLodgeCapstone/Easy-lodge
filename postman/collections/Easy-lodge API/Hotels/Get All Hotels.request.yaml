@@ -1,0 +1,5 @@
+$kind: http-request
+name: Get All Hotels
+method: GET
+url: '{{baseUrl}}/api/v1/hotels'
+order: 1000

@@ -1,0 +1,44 @@
+$kind: http-request
+name: Add Hotel Room
+method: POST
+url: '{{baseUrl}}/api/v1/hotels/addhotelrooms'
+order: 2000
+body:
+  type: formdata
+  content:
+    - key: userId
+      type: text
+      value: '1'
+    - key: hotelId
+      type: text
+      value: '1'
+    - key: roomNumber
+      type: text
+      value: '101'
+    - key: roomType
+      type: text
+      value: 'Deluxe'
+    - key: roomPrice
+      type: text
+      value: '75000'
+    - key: roomCapacity
+      type: text
+      value: '2'
+    - key: bedType
+      type: text
+      value: 'King'
+    - key: bedCount
+      type: text
+      value: '1'
+    - key: size
+      type: text
+      value: '35'
+    - key: pricePerNight
+      type: text
+      value: '75000'
+    - key: discountedPrice
+      type: text
+      value: '65000'
+    - key: amenities
+      type: text
+      value: '["AC", "TV", "Mini Bar", "WiFi"]'

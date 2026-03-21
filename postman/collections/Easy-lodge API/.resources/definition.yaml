@@ -1,0 +1,18 @@
+$kind: collection
+name: Easy-lodge API
+description: |-
+  API collection for Easy-lodge hotel booking platform.
+  
+  ## Base URL
+  All endpoints use `{{baseUrl}}` variable.
+  
+  ## Authentication
+  Protected endpoints require Bearer token in Authorization header.
+  Use the login endpoint to obtain access and refresh tokens.
+variables:
+  - key: baseUrl
+    value: 'http://localhost:3000'
+  - key: accessToken
+    value: ''
+  - key: refreshToken
+    value: ''

@@ -40,7 +40,7 @@ const hotelRooms = pgTable("hotel_rooms", {
   
   // ========== PRICING ==========
   pricePerNight: decimal("price_per_night", { precision: 10, scale: 2 }).notNull(),
-  currency: varchar("currency", { length: 10 }).default("USD"),
+  currency: varchar("currency", { length: 10 }).default("NGN"),
   
   // Discounted price (for promotions)
   discountedPrice: decimal("discounted_price", { precision: 10, scale: 2 }),
