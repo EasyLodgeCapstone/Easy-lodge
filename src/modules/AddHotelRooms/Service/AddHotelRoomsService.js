@@ -9,6 +9,21 @@ class AddHotelRoomService {
     this.usersTable = usersTable;
   }
 
+  async getHotelRooms() {
+    try {
+      const hotelRooms = await db
+        .select()
+        .from(this.hotelRooms)
+        .innerJoin(
+          this.usersTable,
+          eq(this.hotelRooms.ownerId, this.usersTable.id),
+        );
+      return hotelRooms;
+    } catch (error) {
+      console.log(error);
+      throw new Error(error.message);
+    }
+  }
   async AddHotelRoom(userData) {
     try {
       const {
@@ -27,14 +42,14 @@ class AddHotelRoomService {
         images,
       } = userData;
 
-    //   const existingUser = await db
-    //     .select()
-    //     .from(this.usersTable)
-    //     .where(eq(this.usersTable.ownerId, userId));
+      //   const existingUser = await db
+      //     .select()
+      //     .from(this.usersTable)
+      //     .where(eq(this.usersTable.ownerId, userId));
 
-    //   if (existingUser.length === 0) {
-    //     throw new Error("User not found");
-    //   }
+      //   if (existingUser.length === 0) {
+      //     throw new Error("User not found");
+      //   }
 
       const hotelImageResult = [];
 

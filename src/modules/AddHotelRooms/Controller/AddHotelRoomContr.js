@@ -13,6 +13,24 @@ class AddHotelRoomsContr {
   constructor() {
     this.service = new AddHotelRoomsService();
   }
+
+  getHotelRooms = async (req, res) => {
+    try {
+      const hotelRooms = await this.service.getHotelRooms();
+      return res.status(200).json({
+        success: true,
+        message: "Hotel rooms retrieved successfully",
+        hotelRooms,
+      });
+    } catch (error) {
+      console.log(error);
+      return res.status(500).json({
+        success: false,
+        message: "Internal server error",
+        error: error.message,
+      });
+    }
+  };
   // Process file uploads - SIMPLIFIED VERSION
   processUpload = (req, res) => {
     return new Promise((resolve, reject) => {
@@ -49,7 +67,7 @@ class AddHotelRoomsContr {
         );
       }
       const amenities = this.parseJSON(req.body.amenities, []);
-      
+
       // CORRECTION: Handle amenities array properly
       let amenitiesArray = amenities;
       if (req.body["hotelAmenities[]"]) {

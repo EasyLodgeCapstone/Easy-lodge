@@ -1,0 +1,8 @@
+$kind: http-request
+name: Verify Payment
+method: GET
+url: '{{baseUrl}}/api/v1/paystack/verify/:reference'
+order: 2000
+pathVariables:
+  - key: reference
+    value: 'txn_ref_123456'

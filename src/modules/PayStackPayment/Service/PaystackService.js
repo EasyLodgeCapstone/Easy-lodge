@@ -23,13 +23,14 @@ class PaystackService {
     // Initialize your database models
     this.PaymentModel = paystackPayments;
     this.LogModel = paystackLogs;
-    
+
     // Store active verification intervals
     this.activeVerifications = new Map();
   }
 
-  async initializeTransaction(email, amount) {
+  async initializeTransaction(bookingReference, email, amount) {
     try {
+      // check if its the  correct refrence formart
       const response = await axios.post(
         `${this.baseURL}/transaction/initialize`,
         {
@@ -109,7 +110,7 @@ class PaystackService {
       // Update payment record with verification data
       if (response.data.status) {
         const paymentStatus = response.data.data.status;
-        
+
         // Build update object
         const updateData = {
           paystackResponse: response.data,
@@ -121,7 +122,7 @@ class PaystackService {
         if (paymentStatus === "success") {
           updateData.status = "success";
           updateData.paidAt = new Date(response.data.data.paid_at);
-          
+
           // Add authorization details if available
           if (response.data.data.authorization) {
             const auth = response.data.data.authorization;
@@ -160,15 +161,17 @@ class PaystackService {
    */
   async startBackgroundVerification(reference) {
     // Configuration
-    const MAX_ATTEMPTS = 30;        // Try 30 times
-    const INTERVAL_MS = 10000;       // Every 10 seconds
+    const MAX_ATTEMPTS = 30; // Try 30 times
+    const INTERVAL_MS = 10000; // Every 10 seconds
     const TOTAL_TIME_MIN = (MAX_ATTEMPTS * INTERVAL_MS) / 60000; // 5 minutes
-    
+
     let attempts = 0;
     let isCompleted = false;
-    
+
     console.log(`🚀 Starting background verification for: ${reference}`);
-    console.log(`⏱️ Will poll for up to ${TOTAL_TIME_MIN} minutes (${MAX_ATTEMPTS} attempts)`);
+    console.log(
+      `⏱️ Will poll for up to ${TOTAL_TIME_MIN} minutes (${MAX_ATTEMPTS} attempts)`,
+    );
 
     // Store in active verifications (to prevent duplicates)
     if (this.activeVerifications.has(reference)) {
@@ -186,7 +189,9 @@ class PaystackService {
 
       try {
         attempts++;
-        console.log(`🔍 Verification attempt ${attempts}/${MAX_ATTEMPTS} for ${reference}`);
+        console.log(
+          `🔍 Verification attempt ${attempts}/${MAX_ATTEMPTS} for ${reference}`,
+        );
 
         // Call Paystack verify endpoint
         const response = await axios.get(
@@ -195,7 +200,7 @@ class PaystackService {
             headers: {
               Authorization: `Bearer ${this.secretKey}`,
             },
-          }
+          },
         );
 
         const data = response.data;
@@ -217,7 +222,7 @@ class PaystackService {
           // CASE 1: PAYMENT SUCCESSFUL
           if (paymentStatus === "success") {
             console.log(`✅ Payment ${reference} verified successfully!`);
-            
+
             // Build update object with all success data
             const updateData = {
               status: "success",
@@ -255,7 +260,7 @@ class PaystackService {
           // CASE 2: PAYMENT FAILED
           else if (paymentStatus === "failed") {
             console.log(`❌ Payment ${reference} failed`);
-            
+
             await db
               .update(this.PaymentModel)
               .set({
@@ -274,20 +279,27 @@ class PaystackService {
 
           // CASE 3: STILL PENDING - Continue polling
           else {
-            console.log(`⏳ Payment ${reference} still ${paymentStatus || "pending"}`);
-            
+            console.log(
+              `⏳ Payment ${reference} still ${paymentStatus || "pending"}`,
+            );
+
             if (attempts < MAX_ATTEMPTS) {
-              console.log(`🔄 Scheduling next check in ${INTERVAL_MS/1000} seconds...`);
+              console.log(
+                `🔄 Scheduling next check in ${INTERVAL_MS / 1000} seconds...`,
+              );
               setTimeout(verify, INTERVAL_MS);
             } else {
               // Max attempts reached, mark as pending_manual
-              console.log(`⚠️ Max attempts reached for ${reference}. Marking for manual review.`);
-              
+              console.log(
+                `⚠️ Max attempts reached for ${reference}. Marking for manual review.`,
+              );
+
               await db
                 .update(this.PaymentModel)
                 .set({
                   status: "pending_manual",
-                  gatewayResponse: "Verification timed out - please check manually",
+                  gatewayResponse:
+                    "Verification timed out - please check manually",
                   updatedAt: new Date(),
                 })
                 .where(eq(this.PaymentModel.reference, reference));
@@ -313,7 +325,9 @@ class PaystackService {
 
         // Retry on error if under max attempts
         if (attempts < MAX_ATTEMPTS) {
-          console.log(`🔄 Retrying after error in ${INTERVAL_MS/1000} seconds...`);
+          console.log(
+            `🔄 Retrying after error in ${INTERVAL_MS / 1000} seconds...`,
+          );
           setTimeout(verify, INTERVAL_MS);
         } else {
           // Mark for manual review after max errors
@@ -321,7 +335,8 @@ class PaystackService {
             .update(this.PaymentModel)
             .set({
               status: "verification_error",
-              gatewayResponse: "Background verification failed after max retries",
+              gatewayResponse:
+                "Background verification failed after max retries",
               updatedAt: new Date(),
             })
             .where(eq(this.PaymentModel.reference, reference));

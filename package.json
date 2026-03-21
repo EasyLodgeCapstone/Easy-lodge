@@ -8,6 +8,9 @@
     "dev": "nodemon src/server.js",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
+    "run:migrate": "node src/config/Migrations.js",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -24,7 +27,8 @@
   "homepage": "https://github.com/Ezeh0415/Easy-lodge#readme",
   "dependencies": {
     "@ngrok/ngrok": "^1.7.0",
-    "@sentry/node": "^10.42.0",
+    "@sentry/node": "^10.45.0",
+    "@sentry/profiling-node": "^10.45.0",
     "axios": "^1.13.6",
     "bcryptjs": "^3.0.3",
     "cloudinary": "^2.9.0",
@@ -32,6 +36,7 @@
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "crypto": "^1.0.1",
+    "date-fns": "^4.1.0",
     "dotenv": "^17.3.1",
     "drizzle-orm": "^0.45.1",
     "express": "^5.2.1",
@@ -40,10 +45,10 @@
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.3",
     "morgan": "^1.10.1",
+    "multer": "^2.1.1",
     "nodemailer": "^8.0.2",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
-    "multer": "^2.1.1",
     "pg": "^8.20.0",
     "redis": "^5.11.0",
     "zod": "^4.3.6"

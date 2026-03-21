@@ -34,7 +34,7 @@ const configSchema = z.object({
   CLOUD_NAME: z.string(),
   CLOUDNARY_API_KEY: z.string(),
   CLOUDNARY_API_SECRET: z.string(),
-  CLOUDNARY_URL: z.string(),
+  CLOUDINARY_URL: z.string(),
   // BASE_URL: z.string().url(),
   // MONNIFY_API_KEY: z.string(),
   // MONNIFY_SECRET_KEY: z.string(),

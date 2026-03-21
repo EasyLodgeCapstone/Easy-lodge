@@ -1,0 +1,4 @@
+$kind: collection
+name: Hotels
+description: Hotel management endpoints for listing and adding hotels.
+order: 2000

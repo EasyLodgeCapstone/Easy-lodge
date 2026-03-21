@@ -15,6 +15,19 @@ class HotelsContr {
     this.hotelsService = new HotelsService();
   }
 
+  getHotels = async (req, res) => {
+    try {
+      const hotels = await this.hotelsService.getHotels();
+      return res.status(200).json({
+        success: true,
+        message: "Hotels fetched successfully",
+        hotels,
+      });
+    } catch (error) {
+      handleMulterError(error, res);
+    }
+  };
+
   // Process file uploads - SIMPLIFIED VERSION
   processUpload = (req, res) => {
     return new Promise((resolve, reject) => {

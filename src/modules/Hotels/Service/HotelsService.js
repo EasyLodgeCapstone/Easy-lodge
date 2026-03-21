@@ -9,6 +9,11 @@ class HotelsService {
     this.hotels = hotels;
   }
 
+  async getHotels() {
+    const hotels = await db.select().from(this.hotels);
+    return hotels;
+  }
+
   async AddHotel(userData) {
     const {
       userId,

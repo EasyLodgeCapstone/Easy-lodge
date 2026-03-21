@@ -18,13 +18,12 @@ const errorHandler = require("./middleware/errorHandler.js"); // Import error ha
 const passport = require("passport");
 require("./config/passportConfig.js"); // Passport config
 
-
 const path = require("path");
 // IMPORT YOUR ROUTER (fix #1)
-//const Router = require("./modules/GeneralRoute/Router.js"); // Adjust path as needed
+const Router = require("./modules/GeneralRoute/Router.js"); // Adjust path as needed
 const authRoutes = require("../src/modules/GeneralRoute/auth.route.js");
-//const usersRoutes = require("../src/modules/GeneralRoute/users.route.js");
-//const requestRoutes = require("../src/modules/GeneralRoute/request.route.js");
+// const usersRoutes = require("../src/modules/GeneralRoute/users.route.js");
+// const requestRoutes = require("../src/modules/GeneralRoute/request.route.js");
 
 const app = express();
 
@@ -93,7 +92,7 @@ const rateLimiter = async (req, res, next) => {
       await redis.expire(key, 60); // 60 second window
     }
 
-    if (current > 10) {
+    if (current > 50) {
       // More than 10 requests per minute
       const ttl = await redis.ttl(key);
       return res.status(429).json({
@@ -114,18 +113,22 @@ app.use(cookieParser());
 
 // Initialize Passport
 app.use(passport.initialize());
-// Routes
-//app.use("/api/v1", rateLimiter, Router);
-app.use("/api/auth", authRoutes);
-//app.use("/api/users", rateLimiter, usersRoutes);
-//app.use("/api/requests", rateLimiter, requestRoutes);
-
 //error handling middleware
+// Routes
+app.use("/api/auth", rateLimiter, authRoutes);
+// app.use("/api/users", rateLimiter, usersRoutes);
+// app.use("/api/requests", rateLimiter, requestRoutes);
+app.use("/api/v1", rateLimiter, Router);
 app.use(errorHandler);
-app.use("/api/v1", Router);
 
 // Debug route for Sentry (fix #2 - added comma)
-app.get("/debug-sentry", (req, res) => {
+app.get("/debug-sentry", function mainHandler(req, res) {
+  // Send a log before throwing the error
+  Sentry.logger.info("User triggered test error", {
+    action: "test_error_endpoint",
+  });
+  // Send a test metric before throwing the error
+  Sentry.metrics.count("test_counter", 1);
   throw new Error("My first Sentry error!");
 });
 
