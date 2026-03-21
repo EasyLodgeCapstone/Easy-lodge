@@ -17,7 +17,7 @@ const usersTable = pgTable("users", {
 
     email: varchar("email", { length: 255 }).notNull().unique(),
 
-    password: varchar("password", { length: 150 }),
+    password: varchar("password", { length: 255 }).notNull(),
 
     otp: varchar("otp", { length: 6 }),
 
