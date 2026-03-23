@@ -1,5 +1,6 @@
 const { hotelRooms } = require("../../../dbSchema/HotelRoomSchema");
 const { usersTable } = require("../../../dbSchema/userSchema");
+const { hotels } = require("../../../dbSchema/HotelsSchema");
 const { eq } = require("drizzle-orm");
 const cloudinary = require("../../../config/Cloudinary");
 const { db } = require("../../../config/db");
@@ -7,17 +8,25 @@ class AddHotelRoomService {
   constructor() {
     this.hotelRooms = hotelRooms;
     this.usersTable = usersTable;
+    this.hotels = hotels;
   }
 
-  async getHotelRooms() {
+  async getHotelRooms(userId) {
     try {
+      const hotels = await db
+        .select()
+        .from(this.hotels)
+        .where(eq(this.hotels.ownerId, userId));
+
+      if (hotels.length === 0) {
+        throw new Error("User not found");
+      }
+
+      const hotelId = hotels[0].id;
       const hotelRooms = await db
         .select()
         .from(this.hotelRooms)
-        .innerJoin(
-          this.usersTable,
-          eq(this.hotelRooms.ownerId, this.usersTable.id),
-        );
+        .where(eq(this.hotelRooms.hotelId, hotelId));
       return hotelRooms;
     } catch (error) {
       console.log(error);

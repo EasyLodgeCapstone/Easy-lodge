@@ -27,8 +27,7 @@ const hotelRooms = pgTable("hotel_rooms", {
   roomType: varchar("room_type", { length: 100 }).notNull(),
   // e.g., "standard", "deluxe", "suite", "presidential"
   
-  name: varchar("name", { length: 255 }).notNull(),
-  description: text("description"),
+ 
   
   // ========== CAPACITY ==========
   capacity: integer("capacity").notNull(), // Max number of guests

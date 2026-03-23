@@ -1,0 +1,2 @@
+ALTER TABLE "payment_logs" ADD COLUMN "booking_reference" varchar(100) NOT NULL;--> statement-breakpoint
+ALTER TABLE "payment_logs" ADD CONSTRAINT "payment_logs_booking_reference_unique" UNIQUE("booking_reference");

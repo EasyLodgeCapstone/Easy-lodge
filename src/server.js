@@ -86,25 +86,42 @@ const rateLimiter = async (req, res, next) => {
   const key = `rate:${ip}`;
 
   try {
-    const current = await redis.incr(key);
-    // Set expiration on first request
-    if (current === 1) {
-      await redis.expire(key, 60); // 60 second window
-    }
+    // Use MULTI to ensure atomic operations
+    const multi = redis.multi();
+    multi.incr(key);
+    multi.expire(key, 60);
 
+    const results = await multi.exec();
+    const current = results[0][1]; // Get the incr result
+
+    // Get TTL only if limit exceeded
     if (current > 50) {
-      // More than 10 requests per minute
-      const ttl = await redis.ttl(key);
+      let ttl = await redis.ttl(key);
+
+      // If ttl is -1 (no expiry), set it to 60
+      if (ttl === -1) {
+        await redis.expire(key, 60);
+        ttl = 60;
+      }
+
+      // If ttl is -2 (key doesn't exist), set to 60
+      if (ttl === -2) {
+        await redis.setex(key, 60, current);
+        ttl = 60;
+      }
+
       return res.status(429).json({
         error: "Too many requests",
-        retryAfter: ttl,
-        message: `Please try again in ${ttl} seconds`,
+        retryAfter: ttl > 0 ? ttl : 60,
+        message: `Please try again in ${ttl > 0 ? ttl : 60} seconds`,
       });
     }
+
     next();
   } catch (error) {
     console.error("Redis error:", error);
-    next(error);
+    // Fail open - allow request if Redis fails
+    next();
   }
 };
 

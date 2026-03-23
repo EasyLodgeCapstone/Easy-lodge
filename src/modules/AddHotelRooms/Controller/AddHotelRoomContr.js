@@ -16,7 +16,9 @@ class AddHotelRoomsContr {
 
   getHotelRooms = async (req, res) => {
     try {
-      const hotelRooms = await this.service.getHotelRooms();
+      const userId = req.user.id;
+      
+      const hotelRooms = await this.service.getHotelRooms(userId);
       return res.status(200).json({
         success: true,
         message: "Hotel rooms retrieved successfully",
@@ -61,9 +63,9 @@ class AddHotelRoomsContr {
       await this.processUpload(req, res);
 
       // Quick validation
-      if (!req.body.userId) {
+      if (!req.user.id) {
         throw new Error(
-          "Missing required fields: hotelName and userId are required",
+          "Missing required fields: ",
         );
       }
       const amenities = this.parseJSON(req.body.amenities, []);
@@ -78,7 +80,7 @@ class AddHotelRoomsContr {
       }
 
       const newRooms = {
-        ownerId: req.body.userId,
+        ownerId: req.user.id,
         hotelId: req.body.hotelId,
         roomNumber: req.body.roomNumber,
         roomType: req.body.roomType,
