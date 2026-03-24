@@ -15,6 +15,25 @@ const errorHandler = (err, req, res, next) => {
         });
     }
 
+    // Multer errors (file too large, unexpected field, etc.)
+    if (err.name === "MulterError") {
+        return res.status(400).json({
+            success: false,
+            message: err.code === "LIMIT_FILE_SIZE"
+                ? "File too large. Maximum size is 5MB."
+                : err.message
+        });
+    }
+
+    // Custom file filter errors from avatarMulter (wrong file type)
+    if (err.message && err.message.startsWith("Avatar must be")) {
+        return res.status(400).json({
+            success: false,
+            message: err.message
+        });
+    }
+
+
     // Drizzle / DB errors
     if (err.code === "23505") { // Postgres unique constraint violation
         return res.status(409).json({

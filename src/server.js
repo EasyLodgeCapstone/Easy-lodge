@@ -20,9 +20,9 @@ require("./config/passportConfig.js"); // Passport config
 
 const path = require("path");
 // IMPORT YOUR ROUTER (fix #1)
-const Router = require("./modules/GeneralRoute/Router.js"); // Adjust path as needed
+//const Router = require("./modules/GeneralRoute/Router.js"); // Adjust path as needed
 const authRoutes = require("../src/modules/GeneralRoute/auth.route.js");
-// const usersRoutes = require("../src/modules/GeneralRoute/users.route.js");
+const usersRoutes = require("../src/modules/GeneralRoute/userProfile.routes.js");
 // const requestRoutes = require("../src/modules/GeneralRoute/request.route.js");
 
 const app = express();
@@ -115,10 +115,10 @@ app.use(cookieParser());
 app.use(passport.initialize());
 //error handling middleware
 // Routes
-app.use("/api/auth", rateLimiter, authRoutes);
-// app.use("/api/users", rateLimiter, usersRoutes);
+app.use("/api/auth", authRoutes);// remember to add rate limiter
+app.use("/api/users", usersRoutes);
 // app.use("/api/requests", rateLimiter, requestRoutes);
-app.use("/api/v1", rateLimiter, Router);
+//app.use("/api/v1", rateLimiter, Router);
 app.use(errorHandler);
 
 // Debug route for Sentry (fix #2 - added comma)

@@ -65,7 +65,7 @@ class userServiceActivities {
             const secondsLeft = Math.ceil((user.lockUntil - new Date()) / 1000);
             const minutesLeft = Math.ceil(secondsLeft / 60);
             throw new AppError(
-                `Account temporarily locked. Try again in ${minutesLeft} minutes${minutesLeft > 1 ? "s" : ""} .`,
+                `Account temporarily locked. Try again in ${minutesLeft} minute${minutesLeft > 1 ? "s" : ""} .`,
                  403,
                   { lockUntil: user.lockUntil, secondsRemaining: secondsLeft });
         }
@@ -94,7 +94,7 @@ class userServiceActivities {
                     .where(eq(usersTable.email, email));
                 throw new AppError(
                     "Invalid user credentials, multiple tries will trigger account lockout.",
-                     404,
+                     401,
                       { loginAttempts: attempts, remainingAttempts }
                     );
             }
@@ -129,6 +129,7 @@ class userServiceActivities {
     }
 
     async verifyAccount(email, otp) {
+        //const normalizedOtp = String(otp).trim();
         const user = await db.query.usersTable.findFirst({
             where: (user, { eq }) => eq(user.email, email)
         });
@@ -138,7 +139,7 @@ class userServiceActivities {
 
         // Check if OTP matches and hasn't expired
         if (!user.otp || !user.otpExpiry) throw new AppError("Otp expired or not found, please request a new one", 400);
-        if (user.otpExpiry < new Date()) throw new AppError("OTP expired, request a new one", 404);
+        if (user.otpExpiry < new Date()) throw new AppError("OTP expired, request a new one", 400);
         if (user.otp !== otp) throw new AppError("Invalid OTP", 400);
 
 
@@ -155,6 +156,7 @@ class userServiceActivities {
         });
 
         if (!user) throw new AppError("User not found", 404);
+        if (user.isVerified) throw new AppError("Account is already verified", 400);
 
         // Generate otp, otp expiry and send otp as email
         const otp = generateOtp();

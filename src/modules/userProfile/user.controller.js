@@ -1,6 +1,6 @@
-const UsersService = require("./users.service");
-const ImageService = require("../image/image.service");
-const AppError = ("../../middleware/appError.js");
+const UsersService = require("./userProfile.services.js");
+const ImageService = require("./imageServices.js");
+const AppError = require("../../middleware/appError.js");
 
 class UsersController {
 
@@ -49,7 +49,7 @@ class UsersController {
                 throw new AppError("Avatar must be a JPEG, PNG, or WebP image", 400);
             }
 
-            const { url, publicId } = await ImageService.uploadAvatar(req.file);
+            const { url, publicId } = await ImageService.uploadImages(req.file);
             await UsersService.updateAvatar(req.user.id, url, publicId);
 
             res.status(200).json({
@@ -61,25 +61,6 @@ class UsersController {
             next(error);
         }
     }
-
-
-    async uploadImages(req, res, next) {
-        try {
-            if (!req.files || req.files.length === 0) {
-               throw new AppError("No files uploaded", 400);
-            }
-            const images = await ImageService.uploadImages(req.files);
-
-            res.status(200).json({
-                success: true,
-                message: "Images uploaded successfully",
-                data: images
-            });
-        } catch (error) {
-            next(error);
-        }
-    }
-
 
     async deleteAccount(req, res, next) {
         try {
