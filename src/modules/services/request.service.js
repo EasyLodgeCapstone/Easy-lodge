@@ -1,5 +1,5 @@
 const db = require("../../config/db.js");
-const { serviceRequestTable } = require("../../dbSchema/requestSchema.js");
+const { serviceRequestTable } = require("../../dbSchema/serviceReqsSchema.js");
 const { eq } = require("drizzle-orm");
 
 class requestService {

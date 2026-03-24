@@ -6,15 +6,6 @@ const errorHandler = (err, req, res, next) => {
     // Default to 500 if no status code is set
     err.statusCode = err.statusCode || 500;
 
-    // Operational/known errors (thrown via AppError) — send clean response
-    if (err.isOperational) {
-        return res.status(err.statusCode).json({
-            success: false,
-            message: err.message,
-            ...(err.data && { data: err.data }) // Include additional data if available
-        });
-    }
-
     // Multer errors (file too large, unexpected field, etc.)
     if (err.name === "MulterError") {
         return res.status(400).json({
@@ -33,6 +24,14 @@ const errorHandler = (err, req, res, next) => {
         });
     }
 
+    // Operational/known errors (thrown via AppError) — send clean response
+    if (err.isOperational) {
+        return res.status(err.statusCode).json({
+            success: false,
+            message: err.message,
+            ...(err.data && { data: err.data }) // Include additional data if available
+        });
+    }
 
     // Drizzle / DB errors
     if (err.code === "23505") { // Postgres unique constraint violation

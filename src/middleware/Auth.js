@@ -1,10 +1,11 @@
 const jwt = require("jsonwebtoken");
+const AppError = require("./appError.js");
 
 const Auth = (req, res, next) => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader?.startsWith("Bearer ")) {
-    return res.status(401).json({ message: "No token provided" });
+    return next(new AppError("No token provided", 401));
   }
 
   const token = authHeader.split(" ")[1];
@@ -14,13 +15,10 @@ const Auth = (req, res, next) => {
     req.user = { id: decoded.id, role: decoded.role };//role is added to the req.user object for role-based access control
     next();
   } catch (err) {
-    return res.status(401).json({
-      success: false,
-      message:
-        err.name === "TokenExpiredError"
-          ? "Access token expired"
-          : "Invalid token",
-    });
+    const message = err.name === "TokenExpiredError"
+      ? "Access token expired"
+      : "Invalid token";
+    return next(new AppError(message, 401));
   }
 };
 
@@ -28,7 +26,7 @@ const AuthRefresh = (req, res, next) => {
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader?.startsWith("Bearer ")) {
-        return res.status(401).json({ success: false, message: "No token provided" });
+      return next(new AppError("No token provided", 401));
     }
     const token = authHeader.split(" ")[1];
     try {
@@ -37,23 +35,30 @@ const AuthRefresh = (req, res, next) => {
         req.refreshToken = token; // Attach the refresh token to the request object for later use
         next();
     } catch (err) {
-        return res.status(401).json({
-            success: false,
-            message:
-                err.name === "TokenExpiredError"
-                    ? "Refresh token expired"
-                    : "Invalid token",
-        });
+      const message = err.name === "TokenExpiredError"
+        ? "Refresh token expired"
+        : "Invalid token";
+      return next(new AppError(message, 401));
     }
 };
 
+//admin only
 
 const adminOnly = (req, res, next) => {
   if (req.user?.role !== "admin") {
-    return res.status(403).json({ message: "Access denied. Admins only." });
+    return next(new AppError("Access denied. Admins only.", 403));
   }
   next();
 };
 
+//for staff or admin access
 
-module.exports = { Auth, AuthRefresh, adminOnly };
+const staffOrAdmin = (req, res, next) => {
+  const allowed = ["admin", "staff"];
+  if (!allowed.includes(req.user?.role)) {
+    return next(new AppError("Access denied. Staff or admin only.", 403));
+  }
+  next();
+};
+
+module.exports = { Auth, AuthRefresh, adminOnly, staffOrAdmin };
