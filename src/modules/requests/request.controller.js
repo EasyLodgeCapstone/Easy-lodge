@@ -1,4 +1,5 @@
 const RequestService = require("./request.service.js");
+const AppError = require("../../middleware/appError.js");
 
 class RequestController {
 
@@ -8,14 +9,10 @@ class RequestController {
            res.status(201).json({
             success: true,
             message: "Service request created successfully",
-            data: request
+            data: request,
            });
         } catch (error) {
-            res.status(500).json({
-                success: false, 
-                message: "Failed to create service request",
-                error: error.message
-            });
+            next(error);
         }
     }
    async getUserRequests(req, res, next) {
@@ -24,55 +21,44 @@ class RequestController {
             res.status(200).json({
                 success: true,
                 message: "Service requests retrieved successfully",
-                data: requests
+                data: requests,
             });
         } catch (error) {
-            res.status(500).json({
-                success: false, 
-                message: "Failed to retrieve service requests",
-                error: error.message
-            });
+            next(error);
         }
     }
 
     async getRequestById(req, res, next) {
         try {
-            const request = await RequestService.getRequestById(req.params.id);
+            const request = await RequestService.getRequestById(parseInt(req.params.id)); 
             if (!request) {
-                return res.status(404).json({
-                    success: false,
-                    message: "Service request not found"
-                });
+                return next(new AppError("Service request not found", 404));
             }
             res.status(200).json({
                 success: true,
                 message: "Service request retrieved successfully",
-                data: request
+                data: request,
             });
         } catch (error) {
-            res.status(500).json({
-                success: false,
-                message: "Failed to retrieve service request",
-                error: error.message
-            });
+            next(error);
         }
     }
     async updateStatus(req, res, next) {
         try {
-            const {id} = req.params;
-            const {status} = req.body;
-            const result = await RequestService.updateRequestStatus(id, status);
+            const result = await RequestService.updateRequestStatus(
+                parseInt(req.params.id),
+                req.body.status
+            );
+            if (!result) {
+                return next(new AppError("Service request not found", 404));
+            }
             res.status(200).json({
                 success: true,
                 message: "Service request status updated successfully",
                 data: result
             });
         } catch (error) {
-            res.status(500).json({
-                success: false,
-                message: "Failed to update service request status",
-                error: error.message
-            });
+            next(error);
         }
     }
 }
