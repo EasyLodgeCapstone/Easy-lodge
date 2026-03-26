@@ -14,11 +14,19 @@ class CategoryService {
 
         return category[0];
     }
-
+    
     async getAllCategories() {
         const categories = await db.select()
             .from(serviceCategoriesTable)
             .where(eq(serviceCategoriesTable.isActive, true));
+
+        return categories;
+    }
+
+    async getAllCategoriesAdmin() {
+        const categories = await db.select()
+            .from(serviceCategoriesTable)
+            .orderBy(serviceCategoriesTable.isActive);
 
         return categories;
     }
@@ -49,6 +57,22 @@ class CategoryService {
             .returning();
 
         return deleted[0] ?? null;
+    }
+
+    async reactivateCategory(id) {
+        const existing = await this.getCategoryById(id);
+        if (!existing) return null;
+        
+        if (existing.isActive) {
+            return { ...existing, alreadyActive: true };
+        }
+
+        const reactivated = await db.update(serviceCategoriesTable)
+            .set({ isActive: true, updatedAt: new Date() })
+            .where(eq(serviceCategoriesTable.id, id))
+            .returning();
+
+        return reactivated[0];
     }
 }
 

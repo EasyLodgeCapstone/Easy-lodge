@@ -8,8 +8,10 @@ const { createServiceItemSchema, updateServiceItemSchema } = require("../service
 router.get("/", Auth, ServiceItemController.getItemsByCategory);
 
 // Admin/staff only — catalog management
+router.get("/all", Auth, staffOrAdmin, ServiceItemController.getAllItemsAdmin);
 router.post("/", Auth, staffOrAdmin, validateData(createServiceItemSchema, ["body"]), ServiceItemController.createItem);
 router.patch("/:id", Auth, staffOrAdmin, validateData(updateServiceItemSchema, ["body"]), ServiceItemController.updateItem);
 router.delete("/:id", Auth, staffOrAdmin, ServiceItemController.deleteItem);
 
+router.patch("/:id/reactivate", Auth, staffOrAdmin, ServiceItemController.reactivateItem);
 module.exports = router;

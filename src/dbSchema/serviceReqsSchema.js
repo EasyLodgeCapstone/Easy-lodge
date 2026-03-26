@@ -21,8 +21,8 @@ const serviceRequestTable = pgTable("service_requests", {
 
   quantity: integer("quantity").default(1).notNull(),
   priority: priorityEnum("priority").default("normal"),
-  notes: text("notes"),                                       // user's custom instructions
-  scheduledAt: timestamp("scheduled_at"),                     // optional requested delivery time
+  notes: text("notes"), // user's custom instructions
+  scheduledAt: timestamp("scheduled_at"), // optional requested delivery time
   status: statusEnum("status").default("pending"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

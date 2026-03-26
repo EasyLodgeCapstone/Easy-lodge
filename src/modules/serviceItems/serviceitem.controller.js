@@ -40,6 +40,21 @@ class ServiceItemController {
         }
     }
 
+    async getAllItemsAdmin(req, res, next) {
+        try {
+            const items = await ServiceItemService.getAllItemsAdmin(
+                parseInt(req.params.categoryId)
+            );
+            res.status(200).json({
+                success: true,
+                message: "All service items retrieved successfully",
+                data: items,
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+
     async updateItem(req, res, next) {
         try {
             const item = await ServiceItemService.updateItem(
@@ -68,6 +83,29 @@ class ServiceItemController {
             res.status(200).json({
                 success: true,
                 message: "Service item deactivated successfully",
+                data: item,
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    async reactivateItem(req, res, next) {
+        try {
+            const item = await ServiceItemService.reactivateItem(parseInt(req.params.id));
+            if (!item) {
+                return next(new AppError("Service item not found", 404));
+            }
+            if (item.alreadyActive) {
+                return res.status(200).json({
+                    success: true,
+                    message: "Service item is already active",
+                    data: item,
+                });
+            }
+            res.status(200).json({
+                success: true,
+                message: "Service item reactivated successfully",
                 data: item,
             });
         } catch (error) {

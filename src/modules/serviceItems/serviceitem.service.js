@@ -44,6 +44,27 @@ class ServiceItemService {
         return items;
     }
 
+    async getAllItemsAdmin(categoryId) {
+        const items = await db.select({
+            id: serviceItemsTable.id,
+            name: serviceItemsTable.name,
+            description: serviceItemsTable.description,
+            price: serviceItemsTable.price,
+            isActive: serviceItemsTable.isActive,
+            categoryId: serviceItemsTable.categoryId,
+            categoryName: serviceCategoriesTable.name,
+        })
+            .from(serviceItemsTable)
+            .innerJoin(
+                serviceCategoriesTable,
+                eq(serviceItemsTable.categoryId, serviceCategoriesTable.id)
+            )
+            .where(eq(serviceItemsTable.categoryId, categoryId))
+            .orderBy(serviceItemsTable.isActive); // inactive items placed on top
+
+        return items;
+    }
+
     async getItemById(id) {
         const items = await db.select()
             .from(serviceItemsTable)
@@ -70,6 +91,22 @@ class ServiceItemService {
             .returning();
 
         return deleted[0] ?? null;
+    }
+
+    async reactivateItem(id) {
+        const existing = await this.getItemById(id);
+        if (!existing) return null;
+
+        if (existing.isActive) {
+            return { ...existing, alreadyActive: true };
+        }
+
+        const reactivated = await db.update(serviceItemsTable)
+            .set({ isActive: true, updatedAt: new Date() })
+            .where(eq(serviceItemsTable.id, id))
+            .returning();
+
+        return reactivated[0];
     }
 }
 

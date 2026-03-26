@@ -8,8 +8,11 @@ const { createCategorySchema, updateCategorySchema } = require("../categories/ca
 router.get("/", Auth, CategoryController.getAllCategories);
 
 // Admin/staff only for catalog management
+router.get("/all", Auth, staffOrAdmin, CategoryController.getAllCategoriesAdmin);
 router.post("/", Auth, staffOrAdmin, validateData(createCategorySchema, ["body"]), CategoryController.createCategory);
 router.patch("/:id", Auth, staffOrAdmin, validateData(updateCategorySchema, ["body"]), CategoryController.updateCategory);
 router.delete("/:id", Auth, staffOrAdmin, CategoryController.deleteCategory);
+
+router.patch("/:id/reactivate", Auth, staffOrAdmin, CategoryController.reactivateCategory);
 
 module.exports = router;

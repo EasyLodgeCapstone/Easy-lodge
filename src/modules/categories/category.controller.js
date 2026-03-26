@@ -29,6 +29,19 @@ class CategoryController {
         }
     }
 
+    async getAllCategoriesAdmin(req, res, next) {
+        try {
+            const categories = await CategoryService.getAllCategoriesAdmin();
+            res.status(200).json({
+                success: true,
+                message: "All categories retrieved successfully",
+                data: categories,
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+
     async updateCategory(req, res, next) {
         try {
             const category = await CategoryService.updateCategory(req.params.id, req.body);
@@ -54,6 +67,29 @@ class CategoryController {
             res.status(200).json({
                 success: true,
                 message: "Category deactivated successfully",
+                data: category,
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    async reactivateCategory(req, res, next) {
+        try {
+            const category = await CategoryService.reactivateCategory(req.params.id);
+            if (!category) {
+                return next(new AppError("Category not found", 404));
+            }
+            if (category.alreadyActive) {
+                return res.status(200).json({
+                    success: true,
+                    message: "Category is already active",
+                    data: category,
+                });
+            }
+            res.status(200).json({
+                success: true,
+                message: "Category reactivated successfully",
                 data: category,
             });
         } catch (error) {
