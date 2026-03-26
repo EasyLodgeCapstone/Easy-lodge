@@ -9,7 +9,9 @@ const {
     verifyAccountSchema, 
     resendOtpSchema, 
     forgotPasswordSchema, 
-    resetPasswordSchema } = require("../authentication/authentication.validation.js");
+    resetPasswordSchema,
+    recoverInitiateSchema,
+    recoverVerifySchema } = require("../authentication/authentication.validation.js");
 
 
 router.post("/login", validateData(loginSchema, ["body"]), AuthController.loginUser);
@@ -18,6 +20,8 @@ router.post("/verify-otp", validateData(verifyAccountSchema, ["body"]), AuthCont
 router.post("/resend-otp", validateData(resendOtpSchema, ["body"]), AuthController.resendOtp);
 router.post("/forgot-password", validateData(forgotPasswordSchema, ["body"]), AuthController.forgotPassword);
 router.post("/reset-password", validateData(resetPasswordSchema, ["body"]), AuthController.resetPassword);
+router.post("/recover/initiate", validateData(recoverInitiateSchema, ["body"]), AuthController.initiateRecovery);
+router.post("/recover/verify", validateData(recoverVerifySchema, ["body"]), AuthController.recoverAccount);
 
 //google and oauth route
 

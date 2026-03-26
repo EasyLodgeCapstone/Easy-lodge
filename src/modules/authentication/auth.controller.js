@@ -108,6 +108,33 @@ class AuthController {
         }
     }
 
+    async initiateRecovery(req, res, next) {
+        try {
+            const { email } = req.body;
+            await userServiceActivities.initiateRecovery(email);
+            res.status(200).json({
+                success: true,
+                message: "Recovery OTP sent to your email."
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    async recoverAccount(req, res, next) {
+        try {
+            const { email, otp } = req.body;
+            const result = await userServiceActivities.recoverAccount(email, otp);
+            res.status(200).json({
+                success: true,
+                message: "Account recovered successfully. You are now logged in.",
+                data: result
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+
     async logoutUser(req, res, next) {
         try {
             await userServiceActivities.logout(req.user.id);

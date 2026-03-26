@@ -10,6 +10,7 @@ const AppError = require("../../middleware/appError.js");
 
 const Max_LOGIN_ATTEMPTS = 5;
 const LOCK_TIME = 2 * 60 * 1000; // 2 minutes
+const GRACE_PERIOD_DAYS = 90;//for account deletion 
 
 
 class userServiceActivities {
@@ -60,6 +61,20 @@ class userServiceActivities {
             throw new AppError("this account was created via google, please sign in with google", 401);
         }
 
+        if (user.isDeleted) {
+            const deletedAt = new Date(user.deletedAt);
+            const daysSinceDeletion = (Date.now() - deletedAt) / (1000 * 60 * 60 * 24);
+
+            if (daysSinceDeletion > GRACE_PERIOD_DAYS) {
+                throw new AppError("This account has been permanently deactivated.", 401);
+            }
+
+            throw new AppError(
+                "This account has been deleted. Would you like to recover it?",
+                423, // 423 Locked
+                { recoverable: true, email }
+            );
+        }
 
         if (user.lockUntil && user.lockUntil > new Date()) {
             const secondsLeft = Math.ceil((user.lockUntil - new Date()) / 1000);
@@ -225,6 +240,75 @@ class userServiceActivities {
         return true;
     }
 
+    async initiateRecovery(email) {
+        const user = await db.query.usersTable.findFirst({
+            where: (u, { eq }) => eq(u.email, email)
+        });
+
+        if (!user) throw new AppError("User not found", 404);
+        if (!user.isDeleted) throw new AppError("Account is not deleted", 400);
+
+        const deletedAt = new Date(user.deletedAt);
+        const daysSinceDeletion = (Date.now() - deletedAt) / (1000 * 60 * 60 * 24);
+
+        if (daysSinceDeletion > GRACE_PERIOD_DAYS) {
+            throw new AppError("Recovery period has expired. This account can no longer be recovered.", 403);
+        }
+
+        const otp = generateOtp();
+        const otpExpiry = new Date(Date.now() + 10 * 60 * 1000);//10 mins
+
+        await db.update(usersTable)
+            .set({ otp, otpExpiry })
+            .where(eq(usersTable.email, email));
+
+        await sendOTPEmail(email, user.name, "ACCOUNT_RECOVERY", otp);
+        return true;
+    }
+
+    async recoverAccount(email, otp) {
+        const user = await db.query.usersTable.findFirst({
+            where: (u, { eq }) => eq(u.email, email)
+        });
+
+        if (!user) throw new AppError("User not found", 404);
+        if (!user.isDeleted) throw new AppError("Account is not deleted", 400);
+
+        const deletedAt = new Date(user.deletedAt);
+        const daysSinceDeletion = (Date.now() - deletedAt) / (1000 * 60 * 60 * 24);
+
+        if (daysSinceDeletion > GRACE_PERIOD_DAYS) {
+            throw new AppError("Recovery period has expired.", 403);
+        }
+
+        if (!user.otp || !user.otpExpiry) throw new AppError("No OTP found, please request a new one", 400);
+        if (user.otpExpiry < new Date()) throw new AppError("OTP expired, request a new one", 400);
+        if (user.otp !== otp) throw new AppError("Invalid OTP", 400);
+
+        // Reactivate the account
+        await db.update(usersTable)
+            .set({
+                isDeleted: false,
+                deletedAt: null,
+                otp: null,
+                otpExpiry: null,
+            })
+            .where(eq(usersTable.email, email));
+
+        // Log them in — generate tokens
+        const freshUser = await db.query.usersTable.findFirst({
+            where: (u, { eq }) => eq(u.email, email)
+        });
+
+        const payload = { id: freshUser.id, role: freshUser.role };
+        const accessToken = generateAccessToken(payload);
+        const refreshToken = generateRefreshToken(payload);
+
+        await redisClient.set(`refreshToken:${freshUser.id}`, refreshToken, 'EX', 7 * 24 * 60 * 60);
+        const { password: _pw, otp: _otp, otpExpiry: _exp, ...safeUser } = freshUser;
+        return { user: safeUser, accessToken, refreshToken };
+    }
+
     async logout(userId) {
         // Clear the refresh token in the DB to invalidate the session
         await redisClient.del(`refreshToken:${userId}`);
@@ -238,6 +322,24 @@ class userServiceActivities {
             where: (u, { eq }) => eq(u.email, profile.email)
         });
 
+        if (user && user.isDeleted) {
+            const daysSinceDeletion = (Date.now() - new Date(user.deletedAt)) / (1000 * 60 * 60 * 24);
+            if (daysSinceDeletion > GRACE_PERIOD_DAYS) {
+                throw new AppError("This account has been permanently deactivated.", 401);
+            };
+            await db.update(usersTable)
+                .set({
+                    isDeleted: false,
+                    deletedAt: null,
+                    otp: null,
+                    otpExpiry: null
+                })
+                .where(eq(usersTable.id, user.id));
+
+            user = await db.query.usersTable.findFirst({
+                where: (u, { eq }) => eq(u.id, user.id)
+            });
+        }
         if (!user) {
             const createdUser = await db.insert(usersTable).values({
                 name: profile.name,

@@ -34,6 +34,15 @@ const resetPasswordSchema = z.object({
     newPassword: z.string(),
 })
 
+const recoverInitiateSchema = z.object({
+    email: z.string().email(),
+});
+
+const recoverVerifySchema = z.object({
+    email: z.string().email(),
+    otp: z.string(),
+});
+
 
 
 
@@ -43,5 +52,7 @@ module.exports = {
     verifyAccountSchema,
     resendOtpSchema,
     forgotPasswordSchema,
-    resetPasswordSchema
+    resetPasswordSchema,
+    recoverInitiateSchema,
+    recoverVerifySchema
 };
