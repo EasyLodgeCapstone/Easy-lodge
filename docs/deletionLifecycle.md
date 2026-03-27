@@ -2,10 +2,6 @@
 
 This document covers account deletion and recovery behaviour in the Hotel Management API. Since it touches both the **auth** flow (login blocking, recovery endpoints) and the **user profile** flow (the delete action itself), it lives as its own reference file.
 
-> **Where to link this from:**
-> - In `AUTH_README.md` → under a "Related" or "See Also" section
-> - In `USER_PROFILE_README.md` → under the Delete Account section
-
 ---
 
 ## Overview
