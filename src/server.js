@@ -122,9 +122,9 @@ app.use(passport.initialize());
 app.use("/api/adminAuth", rateLimiter, adminRouter)
 app.use("/api/auth", rateLimiter, authRouter);
 app.use("/api/users", rateLimiter, usersProfileRouter);
-app.use("/api/categories", categoryRouter);
-app.use("/api/categories/:categoryId/items", serviceItemRouter);
-app.use("/api/requests", requestRouter);
+app.use("/api/categories", rateLimiter, categoryRouter);
+app.use("/api/categories/:categoryId/items", rateLimiter, serviceItemRouter);
+app.use("/api/requests", rateLimiter,  requestRouter);
 app.use("/api/v1", rateLimiter, Router);
 app.use(errorHandler);
 
