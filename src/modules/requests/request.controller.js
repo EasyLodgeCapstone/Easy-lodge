@@ -15,13 +15,36 @@ class RequestController {
             next(error);
         }
     }
-   async getUserRequests(req, res, next) {
+    async getUserRequests(req, res, next) {
         try {
-            const requests = await RequestService.getUserRequests(req.user.id);
+            const result = await RequestService.getUserRequests(req.user.id, req.query);
             res.status(200).json({
                 success: true,
                 message: "Service requests retrieved successfully",
-                data: requests,
+                data: result.requests,
+                pagination: {
+                    total: result.total,
+                    limit: result.limit,
+                    offset: result.offset,
+                },
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    async getAllRequests(req, res, next) {
+        try {
+            const result = await RequestService.getAllRequests(req.query);
+            res.status(200).json({
+                success: true,
+                message: "All service requests retrieved successfully",
+                data: result.requests,
+                pagination: {
+                    total: result.total,
+                    limit: result.limit,
+                    offset: result.offset,
+                },
             });
         } catch (error) {
             next(error);
@@ -56,6 +79,22 @@ class RequestController {
                 success: true,
                 message: "Service request status updated successfully",
                 data: result
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    async cancelRequest(req, res, next){
+        try {
+            const request = await RequestService.cancelRequest(
+                parseInt(req.params.id),
+                req.user.id
+            );
+            res.status(200).json({
+                success: true,
+                message: "Service request cancelled successfully",
+                data: request,
             });
         } catch (error) {
             next(error);

@@ -61,6 +61,13 @@ class userServiceActivities {
             throw new AppError("this account was created via google, please sign in with google", 401);
         }
 
+        // i dont know but since we have a specific route for admin/staff login...maybe enforce it??? or not??
+        //  i'll keep it commented out for now, uncomment if necessary
+        /*
+        if (user.role !== "user") {
+            throw new AppError("Unauthorized", 401);
+        }*/
+
         if (user.isDeleted) {
             const deletedAt = new Date(user.deletedAt);
             const daysSinceDeletion = (Date.now() - deletedAt) / (1000 * 60 * 60 * 24);

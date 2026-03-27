@@ -25,7 +25,7 @@ const serviceRequestTable = pgTable("service_requests", {
   scheduledAt: timestamp("scheduled_at"), // optional requested delivery time
   status: statusEnum("status").default("pending"),
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()),
 });
 
 module.exports = { serviceRequestTable, priorityEnum, statusEnum };

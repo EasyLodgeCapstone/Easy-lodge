@@ -10,6 +10,7 @@ const AppError = require("../../middleware/appError.js");
 
 const Max_LOGIN_ATTEMPTS = 5;
 const LOCK_TIME = 2 * 60 * 1000; // 2 minutes
+GRACE_PERIOD_DAYS = 90;//for account deletion 
 
 class AdminServiceActivities {
 
@@ -70,6 +71,23 @@ class AdminServiceActivities {
                 401
             );
         }
+
+        //deletion check...almost forgot to add it.
+        if (user.isDeleted) {
+            const deletedAt = new Date(user.deletedAt);
+            const daysSinceDeletion = (Date.now() - deletedAt) / (1000 * 60 * 60 * 24);
+
+            if (daysSinceDeletion > GRACE_PERIOD_DAYS) {
+                throw new AppError("This account has been permanently deactivated.", 401);
+            }
+
+            throw new AppError(
+                "This account has been deleted. Would you like to recover it?",
+                423, // 423 Locked
+                { recoverable: true, email }
+            );
+        }
+
 
         // Account lockout check
         if (user.lockUntil && user.lockUntil > new Date()) {

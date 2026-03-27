@@ -13,4 +13,13 @@ const updateStatusSchema = z.object({
     status: z.enum(["pending", "in_progress", "completed", "cancelled"]),
 });
 
-module.exports = { createRequestSchema, updateStatusSchema };
+const getRequestsQuerySchema = z.object({
+    status: z.enum(["pending", "in_progress", "completed", "cancelled"]).optional(),
+    priority: z.enum(["normal", "urgent"]).optional(),
+    from: z.string().datetime().optional(),
+    to: z.string().datetime().optional(),
+    limit: z.coerce.number().int().min(1).max(100).default(20),
+    offset: z.coerce.number().int().min(0).default(0),
+});
+
+module.exports = { createRequestSchema, updateStatusSchema, getRequestsQuerySchema };
