@@ -1,23 +1,35 @@
-const db = require("../../config/db.js");
-const { usersTable } = require("../../db/schema/users.schema");
-const { eq, ne } = require("drizzle-orm");
-const { hashPassword, comparePassword, generateOtp } = require("../../utils/otpAndPassword.utils.js");
+const { db } = require("../../config/db.js");
+const { usersTable } = require("../../dbSchema/userSchema.js");
+const { profilesTable } = require("../../dbSchema/profileSchema.js")
+const { eq } = require("drizzle-orm");
+const { hashPassword } = require("../../utils/otpAndPassword.utils.js");
+const AppError = require("../../middleware/appError.js")
 
 class UsersService {
 
     async getProfile(userId) {
-
         const user = await db.query.usersTable.findFirst({
             where: (users, { eq }) => eq(users.id, userId)
         });
 
-        return user;
+        if (!user) throw new AppError("User not found", 404);
+
+        // Strip sensitive fields before returning
+        const { password, otp, otpExpiry, ...safeUser } = user;
+        return safeUser;
     }
 
     async updateProfile(userId, updateData) {
+        //rejects empty body formats
 
-        const updates = {};
-        if (updateData.name) updates.name = updateData.name;
+        if (Object.keys(updateData).length === 0) {
+            throw new AppError("No update data provided", 400);
+        }
+
+        const userUpdates = {};
+        const profileUpdates = {};
+
+        if (updateData.name) userUpdates.name = updateData.name;
         if (updateData.email) {
             const existingUser = await db.query.usersTable.findFirst({
                 where: (users, { eq, and, ne }) => and(
@@ -26,48 +38,55 @@ class UsersService {
                 )
             });
             if (existingUser) {
-                throw new Error("Email already in use");
+                throw new AppError("Cannot update profile with these details", 409);
             }
-            updates.email = updateData.email;
-        }
+            userUpdates.email = updateData.email;
+        } 
 
         if (updateData.password) {
-            updates.password = await hashPassword(updateData.password)
+            userUpdates.password = await hashPassword(updateData.password)
         };
-        if (updateData.phone) updates.phone = updateData.phone;
-        const updated = await db.update(usersTable)
-            .set(updates)
-            .where(eq(usersTable.id, userId))
-            .returning();
+        if (updateData.phone) profileUpdates.phone = updateData.phone;
 
-        return updated[0];
-    }
+        if (updateData.bio) profileUpdates.bio = updateData.bio;
+        if (updateData.country) profileUpdates.country = updateData.country;
 
-    async softDeleteUser(userId) {
-
-        const result = await db.update(usersTable)
-            .set({
-                isDeleted: true,
-                deletedAt: new Date()
-            })
-            .where(eq(usersTable.id, userId))
-            .returning();
-
-        if (!result.length) {
-            throw new Error("User not found");
+        if (Object.keys(userUpdates).length > 0){
+            await db.update(usersTable)
+                .set(userUpdates)
+                .where(eq(usersTable.id, userId));
+        }
+        // Update profilesTable if there are profile-level changes
+        if (Object.keys(profileUpdates).length > 0) {
+            await db.update(profilesTable)
+                .set(profileUpdates)
+                .where(eq(profilesTable.userId, userId));
         }
 
-        return result[0];
+        const fresh = await db.query.usersTable.findFirst({
+            where: (u, { eq }) => eq(u.id, userId)
+        });
+        const { password, otp, otpExpiry, ...safeUser } = fresh;
+        return safeUser;
     }
+
+    async updateAvatar(userId, avatarUrl) {
+        await db.update(profilesTable)
+            .set({ avatarUrl })
+            .where(eq(profilesTable.userId, userId));
+        return { avatarUrl };
+    }
+
     async deleteAccount(userId) {
 
-        await db.update(usersTable)
+       const result = await db.update(usersTable)
             .set({
                 isDeleted: true,
                 deletedAt: new Date()
             })
-            .where(eq(usersTable.id, userId));
-
+            .where(eq(usersTable.id, userId))
+            .returning();
+        if (!result.length) throw new AppError("User not found", 404);
         return true;
     }
 }

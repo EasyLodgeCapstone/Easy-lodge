@@ -63,11 +63,6 @@ const sendEmail = async ({ to, subject, text, html }) => {
     }
 };
 
-// Function to generate 6-digit OTP
-const generateOTP = () => {
-    return Math.floor(100000 + Math.random() * 900000).toString();
-};
-
 
 // Function to generate HTML OTP email template
 const generateOTPTemplate = (otp, username, type) => {
@@ -94,8 +89,10 @@ const generateOTPTemplate = (otp, username, type) => {
 
 
 // Main function to send OTP email
-const sendOTPEmail = async (email, username, type) => {
-    const otp = generateOTP();
+const sendOTPEmail = async (email, username, type, otp) => {
+    if (!otp){
+        throw new Error("OTP is required to send email")
+    }
     const template = EMAIL_TEMPLATES[type] || EMAIL_TEMPLATES.VERIFICATION;
     const html = generateOTPTemplate(otp, username, type);
 
@@ -105,7 +102,7 @@ const sendOTPEmail = async (email, username, type) => {
         html,
     });
 
-    return { success, otp: success ? otp : undefined };
+    return { success};
 };
 
 module.exports = { sendOTPEmail };

@@ -6,6 +6,24 @@ const errorHandler = (err, req, res, next) => {
     // Default to 500 if no status code is set
     err.statusCode = err.statusCode || 500;
 
+    // Multer errors (file too large, unexpected field, etc.)
+    if (err.name === "MulterError") {
+        return res.status(400).json({
+            success: false,
+            message: err.code === "LIMIT_FILE_SIZE"
+                ? "File too large. Maximum size is 5MB."
+                : err.message
+        });
+    }
+
+    // Custom file filter errors from avatarMulter (wrong file type)
+    if (err.message && err.message.startsWith("Avatar must be")) {
+        return res.status(400).json({
+            success: false,
+            message: err.message
+        });
+    }
+
     // Operational/known errors (thrown via AppError) — send clean response
     if (err.isOperational) {
         return res.status(err.statusCode).json({

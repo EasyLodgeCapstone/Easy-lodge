@@ -1,8 +1,10 @@
-const UsersService = require("./users.service");
+const UsersService = require("./userProfile.services.js");
+const ImageService = require("./imageServices.js");
+const AppError = require("../../middleware/appError.js");
 
 class UsersController {
 
-    async getProfile(req, res) {
+    async getProfile(req, res, next) {
         try {
 
             const user = await UsersService.getProfile(req.user.id);
@@ -13,12 +15,7 @@ class UsersController {
             });
 
         } catch (error) {
-            console.error("Error fetching profile:", error);
-            res.status(500).json({
-                success: false,
-                message: "An error occurred while fetching profile",
-                error: error.message
-            });
+            next(error);
         }
     }
 
@@ -37,33 +34,46 @@ class UsersController {
             });
 
         } catch (error) {
-            console.error("Error updating profile:", error);
-            res.status(500).json({
-                success: false,
-                message: "An error occurred while updating profile",
-                error: error.message
+           next(error);
+        }
+    }
+
+    async uploadAvatar(req, res, next) {
+        try {
+            if (!req.file) {
+                throw new AppError("No file uploaded", 400);
+            }
+
+            const allowedMimeTypes = ["image/jpeg", "image/png", "image/webp"];
+            if (!allowedMimeTypes.includes(req.file.mimetype)) {
+                throw new AppError("Avatar must be a JPEG, PNG, or WebP image", 400);
+            }
+
+            const { url, publicId } = await ImageService.uploadImages(req.file);
+            await UsersService.updateAvatar(req.user.id, url, publicId);
+
+            res.status(200).json({
+                success: true,
+                message: "Avatar uploaded successfully",
+                data: { avatarUrl: url }
             });
+        } catch (error) {
+            next(error);
         }
     }
 
     async deleteAccount(req, res, next) {
         try {
 
-            const result = await UsersService.deleteAccount(req.user.id);
+            await UsersService.deleteAccount(req.user.id);
 
             res.status(200).json({
                 success: true,
-                message: "Account deleted",
-                data: result
+                message: "Account deleted successfully"
             });
 
         } catch (error) {
-            console.error("Error deleting account:", error);
-            res.status(500).json({
-                success: false,
-                message: "An error occurred while deleting account",
-                error: error.message
-            });
+            next(error)
         }
     }
 }

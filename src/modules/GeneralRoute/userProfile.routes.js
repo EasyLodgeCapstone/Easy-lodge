@@ -1,12 +1,18 @@
 const router = require("express").Router();
 
-const UsersController = require("./users.controller");
-const authMiddleware = require("../../middleware/auth.middleware");
+const { Auth } = require("../../middleware/Auth.js");
+const UsersController = require("../userProfile/user.controller.js");
+const avatarUpload = require("../../config/multerAvatar.js");
+const { validateData } = require("../../middleware/zodValidation.js");
+const { updateProfileSchema } = require("../userProfile/userProfile.validation.js");
 
-router.get("/profile", authMiddleware, UsersController.getProfile);
 
-router.patch("/profile", authMiddleware, UsersController.updateProfile);
+// All user routes are protected
+router.get("/profile", Auth, UsersController.getProfile);
+router.patch("/profile", Auth, validateData(updateProfileSchema, ["body"]), UsersController.updateProfile);
 
-router.delete("/profile", authMiddleware, UsersController.deleteAccount);
+router.patch("/avatar", Auth, avatarUpload.single("avatar"), UsersController.uploadAvatar);
+
+router.delete("/profile", Auth, UsersController.deleteAccount);
 
 module.exports = router;
