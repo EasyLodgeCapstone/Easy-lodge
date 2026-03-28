@@ -53,8 +53,6 @@ const hotels = pgTable("hotels", {
   
   // ========== HOTEL DETAILS ==========
   starRating: integer("star_rating"), // 1-5 stars
-  checkInTime: varchar("check_in_time", { length: 10 }), // "14:00"
-  checkOutTime: varchar("check_out_time", { length: 10 }), // "11:00"
   
   // ========== AMENITIES ==========
   amenities: jsonb("amenities").default([]),

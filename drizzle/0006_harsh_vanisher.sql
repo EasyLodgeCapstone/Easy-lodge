@@ -1,0 +1,1 @@
+ALTER TABLE "payment_logs" ALTER COLUMN "booking_reference" DROP NOT NULL;

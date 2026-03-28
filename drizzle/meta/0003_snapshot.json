@@ -1,6 +1,6 @@
 {
-  "id": "5d4d08f9-3604-4c51-b506-dc42111a1613",
-  "prevId": "edb896f4-561e-4a50-81ab-3c1083f2fca7",
+  "id": "72ab9346-47fd-4553-9010-a3a0c8eec2b5",
+  "prevId": "5d4d08f9-3604-4c51-b506-dc42111a1613",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -1188,18 +1188,6 @@
         "star_rating": {
           "name": "star_rating",
           "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "check_in_time": {
-          "name": "check_in_time",
-          "type": "varchar(10)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "check_out_time": {
-          "name": "check_out_time",
-          "type": "varchar(10)",
           "primaryKey": false,
           "notNull": false
         },

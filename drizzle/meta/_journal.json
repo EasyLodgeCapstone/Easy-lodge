@@ -19,8 +19,36 @@
     {
       "idx": 2,
       "version": "7",
-      "when": 1774453763061,
-      "tag": "0002_silly_the_executioner",
+      "when": 1774125476200,
+      "tag": "0002_solid_baron_strucker",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1774181994763,
+      "tag": "0003_abandoned_firelord",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1774183911402,
+      "tag": "0004_illegal_sharon_carter",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1774190690939,
+      "tag": "0005_abnormal_arachne",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1774192909268,
+      "tag": "0006_harsh_vanisher",
       "breakpoints": true
     }
   ]

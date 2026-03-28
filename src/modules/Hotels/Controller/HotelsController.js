@@ -81,7 +81,7 @@ class HotelsContr {
 
       // Build hotel data
       const hotelData = {
-        userId: req.body.userId,
+        userId: req.user.id,
         hotelName: req.body.hotelName,
         hotelEmail: req.body.hotelEmail || "",
         hotelPhone: req.body.hotelPhone || "",
@@ -106,7 +106,7 @@ class HotelsContr {
         hotelPolicies: policies,
       };
 
-      // console.log("Hotel data to save:", hotelData);
+      console.log("Hotel data to save:", hotelData);
 
       // Save to database
       const savedHotel = await this.hotelsService.AddHotel(hotelData);

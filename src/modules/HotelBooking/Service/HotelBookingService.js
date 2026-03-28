@@ -34,18 +34,45 @@ class HotelBookingService {
     return `EASY${timestamp}${random}LODGE`;
   }
 
-  async getRoomDetails(roomId) {
-    // Fetch all room details in one query
-    const rooms = await db
-      .select()
-      .from(this.hotelRooms)
-      .where(sql`${this.hotelRooms.id} = ANY(${roomId}::int[])`);
+  // Service/HotelBookingService.js
+  async getRoomDetails(roomIds) {
+    try {
+      // Validate input
+      if (!roomIds || !Array.isArray(roomIds) || roomIds.length === 0) {
+        throw new Error(`Invalid roomIds: ${JSON.stringify(roomIds)}`);
+      }
 
-    if (rooms.length === 0) {
-      throw new Error("No rooms found");
+      // Parse to integers
+      const parsedIds = roomIds
+        .map((id) => parseInt(id))
+        .filter((id) => !isNaN(id));
+
+      if (parsedIds.length === 0) {
+        throw new Error("No valid room IDs after parsing");
+      }
+
+      console.log(`🔍 Fetching ${parsedIds.length} rooms:`, parsedIds);
+
+      // ✅ Use IN clause with sql.join (works perfectly)
+      const rooms = await db
+        .select()
+        .from(this.hotelRooms)
+        .where(sql`${this.hotelRooms.id} IN (${sql.join(parsedIds, sql`, `)})`);
+
+      console.log(`✅ Found ${rooms.length} rooms`);
+
+      // Verify all rooms were found
+      if (rooms.length !== parsedIds.length) {
+        const foundIds = rooms.map((r) => r.id);
+        const missingIds = parsedIds.filter((id) => !foundIds.includes(id));
+        throw new Error(`Rooms not found: ${missingIds.join(", ")}`);
+      }
+
+      return rooms;
+    } catch (error) {
+      console.error("❌ Error in getRoomDetails:", error.message);
+      throw error;
     }
-
-    return rooms;
   }
 
   async calcSubTotal(rooms) {
@@ -87,10 +114,10 @@ class HotelBookingService {
   async createBooking(bookingData) {
     try {
       // Fetch room details from database
-      const rooms = await this.getRoomDetails(bookingData.roomId);
+      const rooms = await this.getRoomDetails(bookingData.roomIds);
 
       // Validate that all rooms were found
-      if (rooms.length !== bookingData.roomId.length) {
+      if (rooms.length !== bookingData.roomIds.length) {
         throw new Error("Some rooms were not found");
       }
 
@@ -109,13 +136,23 @@ class HotelBookingService {
         const taxAmount = parseFloat((subtotal * 0.1).toFixed(2));
         const totalAmount = parseFloat((subtotal + taxAmount).toFixed(2));
 
+        // ✅ Convert date strings to Date objects
+        const checkInDate = new Date(bookingData.checkInDate);
+        const checkOutDate = new Date(bookingData.checkOutDate);
+        const now = new Date();
+
+        // Validate dates
+        if (isNaN(checkInDate.getTime()) || isNaN(checkOutDate.getTime())) {
+          throw new Error("Invalid date format");
+        }
+
         // Create the booking object - DON'T spread bookingData
         const newBooking = {
           bookingReference: await this.generateReference(),
           userId: bookingData.userId,
           hotelId: bookingData.hotelId,
-          checkInDate: bookingData.checkInDate,
-          checkOutDate: bookingData.checkOutDate,
+          checkInDate: checkInDate,
+          checkOutDate: checkOutDate,
           numberOfNights: numberOfNights,
           numberOfGuests: bookingData.numberOfGuests,
           numberOfRooms: rooms.length,
@@ -131,8 +168,8 @@ class HotelBookingService {
           metadata: {
             userId: bookingData.userId,
             hotelId: bookingData.hotelId,
-            checkInDate: bookingData.checkInDate,
-            checkOutDate: bookingData.checkOutDate,
+            checkInDate: checkInDate,
+            checkOutDate: checkOutDate,
             numberOfNights: numberOfNights,
             numberOfGuests: bookingData.numberOfGuests,
             numberOfRooms: rooms.length,
@@ -144,7 +181,7 @@ class HotelBookingService {
           },
         };
 
-        console.log("Booking created:", newBooking);
+        console.log("Booking created:");
 
         // ✅ Uncommented: Insert the booking
         const [booking] = await tx
@@ -161,12 +198,11 @@ class HotelBookingService {
             bookingId: booking.id, // ✅ Now 'booking' is defined
             roomId: room.id,
             pricePerNight: room.pricePerNight.toString(),
-            // guestNames: roomGuestNames,
           };
         });
 
-        console.log("Booking created:", booking);
-        console.log("Booking rooms:", bookingRoomsData);
+        console.log("Booking created:");
+        console.log("Booking rooms:");
 
         // ✅ Uncommented: Insert booking rooms
         await tx.insert(this.bookingRooms).values(bookingRoomsData);

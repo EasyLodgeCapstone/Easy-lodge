@@ -1,6 +1,6 @@
 {
-  "id": "5d4d08f9-3604-4c51-b506-dc42111a1613",
-  "prevId": "edb896f4-561e-4a50-81ab-3c1083f2fca7",
+  "id": "3fbb0c12-e7ea-4457-9593-4708c81e6290",
+  "prevId": "72ab9346-47fd-4553-9010-a3a0c8eec2b5",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -821,18 +821,6 @@
           "primaryKey": false,
           "notNull": true
         },
-        "name": {
-          "name": "name",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "description": {
-          "name": "description",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
         "capacity": {
           "name": "capacity",
           "type": "integer",
@@ -1188,18 +1176,6 @@
         "star_rating": {
           "name": "star_rating",
           "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "check_in_time": {
-          "name": "check_in_time",
-          "type": "varchar(10)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "check_out_time": {
-          "name": "check_out_time",
-          "type": "varchar(10)",
           "primaryKey": false,
           "notNull": false
         },

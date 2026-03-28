@@ -1,6 +1,6 @@
 {
-  "id": "5d4d08f9-3604-4c51-b506-dc42111a1613",
-  "prevId": "edb896f4-561e-4a50-81ab-3c1083f2fca7",
+  "id": "87718c9a-6c02-47a9-9e06-fe177dc2e7d7",
+  "prevId": "406249aa-9cbb-4c9a-9d23-f4e297604e70",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -821,18 +821,6 @@
           "primaryKey": false,
           "notNull": true
         },
-        "name": {
-          "name": "name",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "description": {
-          "name": "description",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
         "capacity": {
           "name": "capacity",
           "type": "integer",
@@ -1188,18 +1176,6 @@
         "star_rating": {
           "name": "star_rating",
           "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "check_in_time": {
-          "name": "check_in_time",
-          "type": "varchar(10)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "check_out_time": {
-          "name": "check_out_time",
-          "type": "varchar(10)",
           "primaryKey": false,
           "notNull": false
         },
@@ -2107,6 +2083,12 @@
           "primaryKey": false,
           "notNull": true
         },
+        "booking_reference": {
+          "name": "booking_reference",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
         "event": {
           "name": "event",
           "type": "varchar(100)",
@@ -2199,6 +2181,13 @@
           "nullsNotDistinct": false,
           "columns": [
             "reference"
+          ]
+        },
+        "payment_logs_booking_reference_unique": {
+          "name": "payment_logs_booking_reference_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "booking_reference"
           ]
         }
       },

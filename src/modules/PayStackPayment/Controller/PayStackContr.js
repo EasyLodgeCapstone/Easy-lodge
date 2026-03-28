@@ -4,10 +4,11 @@ class PaymentPaystackController {
   }
 
   initializeTransaction = async (req, res) => {
-    const { email, amount } = req.body;
+    const { bookingReference, email, amount } = req.body;
 
     try {
       const result = await this.paystackService.initializeTransaction(
+        bookingReference,
         email,
         amount,
       );
@@ -27,8 +28,6 @@ class PaymentPaystackController {
       res.status(500).json({ success: false, message: error.message });
     }
   };
-
-  
 }
 
 module.exports = PaymentPaystackController;
