@@ -21,9 +21,13 @@ require("./config/passportConfig.js"); // Passport config
 const path = require("path");
 // IMPORT YOUR ROUTER (fix #1)
 const Router = require("./modules/GeneralRoute/Router.js"); // Adjust path as needed
-const authRoutes = require("../src/modules/GeneralRoute/auth.route.js");
-// const usersRoutes = require("../src/modules/GeneralRoute/users.route.js");
-// const requestRoutes = require("../src/modules/GeneralRoute/request.route.js");
+const adminRouter = require("../src/modules/GeneralRoute/admin.route.js")
+const authRouter = require("../src/modules/GeneralRoute/auth.route.js");
+const usersProfileRouter = require("../src/modules/GeneralRoute/userProfile.routes.js");
+const categoryRouter = require("../src/modules/GeneralRoute/category.route.js")
+const serviceItemRouter = require("../src/modules/GeneralRoute/serviceItem.route.js")
+const requestRouter = require("../src/modules/GeneralRoute/request.route.js");
+
 
 const app = express();
 
@@ -132,9 +136,12 @@ app.use(cookieParser());
 app.use(passport.initialize());
 //error handling middleware
 // Routes
-app.use("/api/auth", rateLimiter, authRoutes);
-// app.use("/api/users", rateLimiter, usersRoutes);
-// app.use("/api/requests", rateLimiter, requestRoutes);
+app.use("/api/adminAuth", rateLimiter, adminRouter)
+app.use("/api/auth", rateLimiter, authRouter);
+app.use("/api/users", rateLimiter, usersProfileRouter);
+app.use("/api/categories", rateLimiter, categoryRouter);
+app.use("/api/categories/:categoryId/items", rateLimiter, serviceItemRouter);
+app.use("/api/requests", rateLimiter,  requestRouter);
 app.use("/api/v1", rateLimiter, Router);
 app.use(errorHandler);
 

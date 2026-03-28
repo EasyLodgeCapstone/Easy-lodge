@@ -1,4 +1,4 @@
-const { z, ZodError, json } = require("zod");
+const { ZodError } = require("zod");
 const AppError = require("../middleware/appError.js");
 
 function validateData(schema, targets) {
@@ -13,23 +13,19 @@ function validateData(schema, targets) {
       next();
     } catch (error) {
       if (error instanceof ZodError) {
-        // Pass all validation errors to the error handler
-        // console.log("Validation errors:", error);
+        const errors = error.issues.map((err) => ({
+          field: err.path.join("."),
+          message: err.message,
+        }));
+
+        // Pass a structured AppError — message stays a plain string,
+        // validation detail goes into the data field where it belongs
         return next(
-          new AppError(
-            JSON.stringify({
-              message: "Validation failed",
-              errors: error.issues.map((err) => ({
-                field: err.path.join("."),
-                message: err.message,
-              })),
-            }),
-            400
-          )
+          new AppError("Validation failed", 400, { errors })
         );
       }
 
-      // Let the error handler catch unexpected errors
+      //  error handler catches unexpected errors
       return next(error);
     }
   };

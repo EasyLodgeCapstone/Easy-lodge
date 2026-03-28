@@ -34,11 +34,14 @@ const resetPasswordSchema = z.object({
     newPassword: z.string(),
 })
 
-const updateProfileSchema = z.object({
-    name: z.string().optional(),
-    email: z.string().email().optional(),
-    password: z.string().optional(),
-})
+const recoverInitiateSchema = z.object({
+    email: z.string().email(),
+});
+
+const recoverVerifySchema = z.object({
+    email: z.string().email(),
+    otp: z.string(),
+});
 
 
 
@@ -50,5 +53,6 @@ module.exports = {
     resendOtpSchema,
     forgotPasswordSchema,
     resetPasswordSchema,
-    updateProfileSchema
+    recoverInitiateSchema,
+    recoverVerifySchema
 };

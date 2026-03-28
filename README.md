@@ -16,6 +16,19 @@ npx drizzle-kit migrate
 ```
 
 
+
+## Docs related to this project, contains info for frontend to view. click link to view them
+
+| Section | Link |
+|--------|------|
+| AdminRoute | [Open](./docs/AdminRoute.md) |
+| Authtication Route | [Open](./docs/Authenticationroute.md) |
+| Account Deletion flow | [Open](./docs/deletionLifecycle.md) |
+| Request And services flow and associated routes | [Open](./docs/RequestsAndServices.md) |
+| User profile Route | [Open](./docs/userProfile.md) |
+
+
+**Contributing info below**
 ---
 
 ## 1️⃣ Clone the Repository
