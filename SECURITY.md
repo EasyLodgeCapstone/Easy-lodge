@@ -31,7 +31,7 @@ This document outlines the security measures implemented for EasyLodge to ensure
 - [x] JWT Authentication tested.
 - [x] Protected routes tested (unauthorized access returns 403).
 - [x] `npm audit` run with no critical vulnerabilities.
-- [ ] IDOR Testing (Ensure users cannot access other users' bookings by changing IDs).
+- [x] IDOR Testing (Ensure users cannot access other users' bookings by changing IDs).
 
 ## 6. Known Limitations (Hackathon Scope)
 *As this is a hackathon prototype, the following are planned for production:*
